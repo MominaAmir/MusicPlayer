@@ -41,13 +41,11 @@ class _LocalDeviceDataState extends State<LocalDeviceData> {
         ),
         child: Builder(builder: (context) {
           return Obx(() {
-            // Check if songs are still loading
             if (controller.localsonglist.isEmpty) {
               return const Center(
                 child: CircularProgressIndicator(),
               );
             } else {
-              // Songs are loaded, return the SliverList with FutureBuilder
               return CustomScrollView(
                 slivers: [
                   SliverAppBar(

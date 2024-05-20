@@ -11,11 +11,17 @@ import android.app.Application;
 import android.content.Context;
 import androidx.annotation.CallSuper;
 import androidx.multidex.MultiDex;
+import androidx.multidex.MultiDexApplication;
 
 /**
  * Extension of {@link android.app.Application}, adding multidex support.
  */
-public class FlutterMultiDexApplication extends Application {
+public class FlutterMultiDexApplication extends MultiDexApplication {
+   @Override
+    public void onCreate() {
+        super.onCreate();
+        // Any other code you need to run on application start
+    }
   @Override
   @CallSuper
   protected void attachBaseContext(Context base) {

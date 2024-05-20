@@ -12,7 +12,7 @@
 
     <application
         android:label="musicplayer"
-        android:name="${applicationName}"
+        android:name=".FlutterMultiDexApplication"
         android:icon="@mipmap/ic_launcher">
               <activity
            android:name="com.ryanheise.audioservice.AudioServiceActivity"

@@ -15,32 +15,17 @@ class AS_Album extends StatefulWidget {
   _AS_AlbumState createState() => _AS_AlbumState();
 }
 
-class _AS_AlbumState extends State<AS_Album>  with SingleTickerProviderStateMixin {
+class _AS_AlbumState extends State<AS_Album>{
 
-    late AnimationController _controller;
-  late Animation<Offset> _animation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1000),
-    );
-
-    _animation = Tween<Offset>(
-      begin: const Offset(20.0, 0.0),
-      end: const Offset(5.0, 0.0),
-    ).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: Curves.easeInOut,
-      ),
-    );
-
-    // _controller.repeat(reverse: true);
+   String? currentSongName;
+  String? currentSongUrl;
+  
+void onSongTap(String songName, String songUrl) {
+    setState(() {
+      currentSongName = songName;
+      currentSongUrl = songUrl;
+    });
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -133,40 +118,7 @@ class _AS_AlbumState extends State<AS_Album>  with SingleTickerProviderStateMixi
                             ),
                           ),
                         ),
-                        Align(
-                          alignment: const AlignmentDirectional(-0.67, 0.46),
-                          child: Padding(
-                            padding: const EdgeInsetsDirectional.fromSTEB(15, 10, 0, 0),
-                            child: SlideTransition(
-                              position: _animation,
-                              child: const Text(
-                                'Song Name',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 24.0,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        Align(
-                          alignment: const AlignmentDirectional(-0.7, 0.84),
-                          child: Padding(
-                            padding: const EdgeInsetsDirectional.fromSTEB(15, 8, 0, 5),
-                            child: SlideTransition(
-                              position: _animation,
-                              child: const Text(
-                                'Hello World',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 24.0,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
+                        
                         const Align(
                           alignment: AlignmentDirectional(-0.93, 0.69),
                           child: Icon(
@@ -221,12 +173,15 @@ class _AS_AlbumState extends State<AS_Album>  with SingleTickerProviderStateMixi
                               url: url,
                               snapshot: snapshot,
                               index: index,
+                              
+                   onSongTap:onSongTap,
                             );
                           },
                         );
                       },
                     );
                   },
+        childCount: 1, //
                 ),
               ),
             ],
@@ -235,4 +190,5 @@ class _AS_AlbumState extends State<AS_Album>  with SingleTickerProviderStateMixi
       ),
     );
   }
+  
 }

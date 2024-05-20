@@ -15,32 +15,16 @@ class SMWAlbum extends StatefulWidget {
   _SMWAlbumState createState() => _SMWAlbumState();
 }
 
-class _SMWAlbumState extends State<SMWAlbum>
-    with SingleTickerProviderStateMixin {
-  // late Future<List<>>
+class _SMWAlbumState extends State<SMWAlbum>{
 
-  late AnimationController _controller;
-  late Animation<Offset> _animation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1000),
-    );
-
-    _animation = Tween<Offset>(
-      begin: const Offset(20.0, 0.0),
-      end: const Offset(5.0, 0.0),
-    ).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: Curves.easeInOut,
-      ),
-    );
-
-    // _controller.repeat(reverse: true);
+    String? currentSongName;
+  String? currentSongUrl;
+  
+void onSongTap(String songName, String songUrl) {
+    setState(() {
+      currentSongName = songName;
+      currentSongUrl = songUrl;
+    });
   }
 
   @override
@@ -135,42 +119,6 @@ class _SMWAlbumState extends State<SMWAlbum>
                               ),
                             ),
                           ),
-                          Align(
-                            alignment: const AlignmentDirectional(-0.67, 0.46),
-                            child: Padding(
-                              padding: const EdgeInsetsDirectional.fromSTEB(
-                                  15, 10, 0, 0),
-                              child: SlideTransition(
-                                position: _animation,
-                                child: const Text(
-                                  'Song Name',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 24.0,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          Align(
-                            alignment: const AlignmentDirectional(-0.7, 0.84),
-                            child: Padding(
-                              padding: const EdgeInsetsDirectional.fromSTEB(
-                                  15, 8, 0, 5),
-                              child: SlideTransition(
-                                position: _animation,
-                                child: const Text(
-                                  'Hello World',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 24.0,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
                           const Align(
                             alignment: AlignmentDirectional(-0.93, 0.69),
                             child: Icon(
@@ -185,64 +133,59 @@ class _SMWAlbumState extends State<SMWAlbum>
                   ),
                 ),
               ),
-              SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    return StreamBuilder(
-                      stream: FirebaseFirestore.instance
-                          .collection('SidhuMooseWala')
-                          .snapshots(),
-                      builder:
-                          (context, AsyncSnapshot<QuerySnapshot> snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return const Center(
-                            child: CircularProgressIndicator(),
-                          );
-                        }
-                        if (snapshot.hasError) {
-                          return Center(
-                            child: Text('Error: ${snapshot.error}'),
-                          );
-                        }
-                        if (snapshot.data!.docs.isEmpty) {
-                          return const Center(
-                            child: Text('No songs found.'),
-                          );
-                        }
-                        return ListView.builder(
-                          itemCount: snapshot.data!.docs.length,
-                          shrinkWrap: true,
-                          itemBuilder: (context, index) {
-                            var song = snapshot.data!.docs[index];
-                            var songData = song.data() as Map<String, dynamic>;
-                            String artist = songData['artist'];
-                            String name = songData['name'];
-                            String url = songData['url'];
-                            return FirebaseSongList(
-                              songName: name,
-                              subtitle: artist,
-                              url: url,
-                              snapshot: snapshot,
-                              index: index,
-                            );
-                          },
-                        );
-                      },
-                    );
-                  },
-                ),
-              ),
+               SliverList(
+      delegate: SliverChildBuilderDelegate(
+        (context, index) {
+          return StreamBuilder(
+            stream: FirebaseFirestore.instance
+                .collection('SidhuMooseWala')
+                .snapshots(),
+            builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(
+                  child: CircularProgressIndicator(),
+                );
+              }
+              if (snapshot.hasError) {
+                return Center(
+                  child: Text('Error: ${snapshot.error}'),
+                );
+              }
+              if (snapshot.data!.docs.isEmpty) {
+                return const Center(
+                  child: Text('No songs found.'),
+                );
+              }
+              return ListView.builder(
+                itemCount: snapshot.data!.docs.length,
+                shrinkWrap: true,
+                physics: NeverScrollableScrollPhysics(),
+                itemBuilder: (context, index) {
+                  var song = snapshot.data!.docs[index];
+                  var songData = song.data() as Map<String, dynamic>;
+                  String artist = songData['artist'];
+                  String name = songData['name'];
+                  String url = songData['url'];
+                  return FirebaseSongList(
+                    songName: name,
+                    subtitle: artist,
+                    url: url,
+                    index: index,
+                    snapshot: snapshot,
+                   onSongTap:onSongTap,
+                  );
+                },
+              );
+            },
+          );
+        },
+        childCount: 1, // Set childCount to 1 because we have only one Sliver
+      ),
+    ),
             ],
           );
         }),
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose(); // Dispose the animation controller
-    super.dispose();
   }
 }
