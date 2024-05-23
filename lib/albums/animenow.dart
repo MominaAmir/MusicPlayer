@@ -1,5 +1,3 @@
-// BTS_album.dart
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -7,14 +5,14 @@ import 'package:musicplayer/Pages/home.dart';
 import 'package:musicplayer/Pages/miniplayer.dart';
 import 'package:musicplayer/component/FirebaseSongList.dart';
 
-class BTS_Album extends StatefulWidget {
-  const BTS_Album({Key? key}) : super(key: key);
+class Anime_Album extends StatefulWidget {
+  const Anime_Album({super.key});
 
   @override
-  _BTS_AlbumState createState() => _BTS_AlbumState();
+  State<Anime_Album> createState() => _Anime_AlbumState();
 }
 
-class _BTS_AlbumState extends State<BTS_Album> {
+class _Anime_AlbumState extends State<Anime_Album> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -50,7 +48,7 @@ class _BTS_AlbumState extends State<BTS_Album> {
                     alignment: const AlignmentDirectional(0, -1),
                     child: SelectionArea(
                       child: Text(
-                        'BTS',
+                        'Anime Playlist',
                         textAlign: TextAlign.center,
                         style: GoogleFonts.acme(
                           color: Colors.white,
@@ -101,10 +99,10 @@ class _BTS_AlbumState extends State<BTS_Album> {
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(10),
                                 child: Image.asset(
-                                  'lib/assest/bts.jpg',
+                                  'lib/assest/animenow.jpeg',
                                   width: 400,
                                   height: 300,
-                                  // fit: BoxFit.fill,
+                                  fit: BoxFit.fill,
                                 ),
                               ),
                             ),
@@ -127,7 +125,7 @@ class _BTS_AlbumState extends State<BTS_Album> {
                     (context, index) {
                       return StreamBuilder(
                         stream: FirebaseFirestore.instance
-                            .collection('BTS')
+                            .collection('anime')
                             .snapshots(),
                         builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
                           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -178,6 +176,6 @@ class _BTS_AlbumState extends State<BTS_Album> {
         ),
       ),
       bottomNavigationBar: MiniPlayer(),
-    );
+    );;
   }
 }

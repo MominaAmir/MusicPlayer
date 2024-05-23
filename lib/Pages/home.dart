@@ -1,21 +1,27 @@
-// ignore_for_file: unused_field, use_super_parameters, library_private_types_in_public_api,
+// ignore_for_file: unused_field, use_super_parameters, library_private_types_in_public_api,, prefer_final_fields
 // ignore_for_file: invalid_use_of_protected_member, non_constant_identifier_names, avoid_print, unnecessary_new,
 // ignore_for_file: sized_box_for_whitespace, unnecessary_const
 
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 // import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:musicplayer/Pages/downloads.dart';
+import 'package:musicplayer/Pages/miniplayer.dart';
 import 'package:musicplayer/Pages/mobile_files.dart';
-import 'package:musicplayer/Pages/favorite_songs.dart';
+import 'package:musicplayer/Pages/searchPage.dart';
 import 'package:musicplayer/Pages/top_songs.dart';
 import 'package:musicplayer/albums/aa_album.dart';
+import 'package:musicplayer/albums/animenow.dart';
 import 'package:musicplayer/albums/as_album.dart';
 import 'package:musicplayer/albums/be_album.dart';
 import 'package:musicplayer/albums/bts.dart';
+import 'package:musicplayer/albums/cocmelon.dart';
 import 'package:musicplayer/albums/dd_album.dart';
 import 'package:musicplayer/albums/smw_album.dart';
+import 'package:musicplayer/component/FirebaseSongList.dart';
 import 'package:musicplayer/model/HomePageModel.dart';
 // import 'package:musicplayer/model/albumModel.dart';
 import 'package:musicplayer/model/song_data_controller.dart';
@@ -96,51 +102,17 @@ class _HomePageState extends State<HomePage> {
               title: Align(
                 alignment: const AlignmentDirectional(0, -1),
                 child: SelectionArea(
-                  child: customtitle,
-                ),
-              ),
-              actions: [
-                Align(
-                  alignment: const AlignmentDirectional(0, 0),
-                  child: IconButton(
-                    hoverColor: const Color.fromARGB(255, 73, 1, 70),
-                    icon: customIcon,
-                    onPressed: () {
-                      setState(() {
-                        if (isSearchFieldVisible) {
-                          isSearchFieldVisible = false;
-                          customIcon = const Icon(Icons.search);
-                          customtitle = Text(
-                            'HOME',
-                            textAlign: TextAlign.center,
-                            style: GoogleFonts.acme(
-                              color: Colors.white,
-                              fontSize: 24.0,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          );
-                        } else {
-                          isSearchFieldVisible = true;
-                          customIcon = const Icon(Icons.cancel);
-                          customtitle = TextField(
-                            textInputAction: TextInputAction.go,
-                            decoration: const InputDecoration(
-                              hintText: "enter song name",
-                            ),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 16.0,
-                            ),
-                            onSubmitted: (value) {
-                              _searchSongs(value);
-                            },
-                          );
-                        }
-                      });
-                    },
+                  child: Text(
+                    'HOME',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.acme(
+                      color: Colors.white,
+                      fontSize: 24.0,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
-              ],
+              ),
               bottom: PreferredSize(
                 preferredSize: const Size.fromHeight(7),
                 child: Container(),
@@ -343,9 +315,9 @@ class _HomePageState extends State<HomePage> {
               child: Align(
                 alignment: const AlignmentDirectional(-1, -1),
                 child: Padding(
-                  padding: const EdgeInsetsDirectional.fromSTEB(10, 40, 0, 0),
+                  padding: const EdgeInsetsDirectional.fromSTEB(10, 40, 0, 10),
                   child: Text(
-                    'Recently Played',
+                    'Kids Listening',
                     style: GoogleFonts.acme(
                       color: Colors.black,
                       fontSize: 25.0,
@@ -356,310 +328,175 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             SliverToBoxAdapter(
-              child: Align(
-                alignment: const AlignmentDirectional(-1, -1),
-                child: Padding(
-                  padding: const EdgeInsets.all(6),
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
+                child: Align(
+              alignment: const AlignmentDirectional(-1, -1),
+              child: Column(
+                mainAxisSize: MainAxisSize.max,
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  Card(
+                    margin: EdgeInsets.all(10),
+                    clipBehavior: Clip.antiAliasWithSaveLayer,
+                    color: const Color(0xFF975AC5),
+                    elevation: 4,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(4),
+                    ),
                     child: Row(
-                      mainAxisSize: MainAxisSize.max,
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsetsDirectional.fromSTEB(
+                                5, 5, 5, 5),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(6),
+                              child: Image.asset(
+                                'lib/assest/animenow.jpeg',
+                                width: 100,
+                                height: 100,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                          ),
+                          TextButton(
+                            child: Text(
+                              'Anime Now ',
+                              style: GoogleFonts.acme(
+                                color: Colors.black,
+                                fontSize: 20.0,
+                              ),
+                            ),
+                            onPressed: () {
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          const Anime_Album()));
+                              print('Image tapped!');
+                            },
+                          ),
+                          SizedBox(width: 10),
+                        ]),
+                  ),
+                  Card(
+                    margin: EdgeInsets.all(10),
+                    clipBehavior: Clip.antiAliasWithSaveLayer,
+                    color: const Color(0xFF975AC5),
+                    elevation: 4,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.start,
                       children: [
-                        Card(
-                          clipBehavior: Clip.antiAliasWithSaveLayer,
-                          color: Colors.black,
-                          elevation: 4,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Container(
-                            width: 150,
-                            height: 150,
-                            child: Stack(
-                              alignment: const AlignmentDirectional(0, 1),
-                              children: [
-                                Align(
-                                  alignment: const AlignmentDirectional(0, 0),
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(8),
-                                    child: Image.network(
-                                      'https://picsum.photos/seed/206/600',
-                                      width: 300,
-                                      height: 200,
-                                      fit: BoxFit.cover,
-                                    ),
-                                  ),
-                                ),
-                                Align(
-                                  alignment:
-                                      const AlignmentDirectional(-1.05, 0.67),
-                                  child: Padding(
-                                    padding:
-                                        const EdgeInsetsDirectional.fromSTEB(
-                                            10, 10, 0, 0),
-                                    child: Text(
-                                      'SongName',
-                                      style: GoogleFonts.acme(
-                                        color: Colors.white,
-                                        fontSize: 18.0,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                Align(
-                                  alignment:
-                                      const AlignmentDirectional(-0.78, 0.95),
-                                  child: Text(
-                                    'subtitle',
-                                    style: GoogleFonts.acme(
-                                      color: Colors.white,
-                                      fontSize: 18.0,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ],
+                        Padding(
+                          padding:
+                              const EdgeInsetsDirectional.fromSTEB(5, 5, 5, 5),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(6),
+                            child: Image.asset(
+                              'lib/assest/cocomelon.jpg',
+                              width: 100,
+                              height: 100,
+                              fit: BoxFit.cover,
                             ),
                           ),
                         ),
-                        Card(
-                          clipBehavior: Clip.antiAliasWithSaveLayer,
-                          color: Colors.black,
-                          elevation: 4,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Container(
-                            width: 150,
-                            height: 150,
-                            child: Stack(
-                              alignment: const AlignmentDirectional(0, 1),
-                              children: [
-                                Align(
-                                  alignment: const AlignmentDirectional(0, 0),
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(8),
-                                    child: Image.network(
-                                      'https://picsum.photos/seed/206/600',
-                                      width: 300,
-                                      height: 200,
-                                      fit: BoxFit.cover,
-                                    ),
-                                  ),
-                                ),
-                                Align(
-                                  alignment:
-                                      const AlignmentDirectional(-1.05, 0.67),
-                                  child: Padding(
-                                    padding:
-                                        const EdgeInsetsDirectional.fromSTEB(
-                                            10, 10, 0, 0),
-                                    child: Text(
-                                      'SongName',
-                                      style: GoogleFonts.acme(
-                                        color: Colors.white,
-                                        fontSize: 18.0,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                Align(
-                                  alignment:
-                                      const AlignmentDirectional(-0.78, 0.95),
-                                  child: Text(
-                                    'subtitle',
-                                    style: GoogleFonts.acme(
-                                      color: Colors.white,
-                                      fontSize: 18.0,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ],
+                        TextButton(
+                          child: Text(
+                            'Cocomelon ',
+                            style: GoogleFonts.acme(
+                              color: Colors.black,
+                              fontSize: 20.0,
                             ),
                           ),
+                          onPressed: () {
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) =>
+                                        const CocmelonAlbum()));
+                            print('Image tapped!');
+                          },
                         ),
-                        Card(
-                          clipBehavior: Clip.antiAliasWithSaveLayer,
-                          color: Colors.black,
-                          elevation: 4,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Container(
-                            width: 150,
-                            height: 150,
-                            child: Stack(
-                              alignment: const AlignmentDirectional(0, 1),
-                              children: [
-                                Align(
-                                  alignment: const AlignmentDirectional(0, 0),
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(8),
-                                    child: Image.network(
-                                      'https://picsum.photos/seed/206/600',
-                                      width: 300,
-                                      height: 200,
-                                      fit: BoxFit.cover,
-                                    ),
-                                  ),
-                                ),
-                                Align(
-                                  alignment:
-                                      const AlignmentDirectional(-1.05, 0.67),
-                                  child: Padding(
-                                    padding:
-                                        const EdgeInsetsDirectional.fromSTEB(
-                                            10, 10, 0, 0),
-                                    child: Text(
-                                      'SongName',
-                                      style: GoogleFonts.acme(
-                                        color: Colors.white,
-                                        fontSize: 18.0,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                Align(
-                                  alignment:
-                                      const AlignmentDirectional(-0.78, 0.95),
-                                  child: Text(
-                                    'subtitle',
-                                    style: GoogleFonts.acme(
-                                      color: Colors.white,
-                                      fontSize: 18.0,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        Card(
-                          clipBehavior: Clip.antiAliasWithSaveLayer,
-                          color: Colors.black,
-                          elevation: 4,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Container(
-                            width: 150,
-                            height: 150,
-                            child: Stack(
-                              alignment: const AlignmentDirectional(0, 1),
-                              children: [
-                                Align(
-                                  alignment: const AlignmentDirectional(0, 0),
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(8),
-                                    child: Image.network(
-                                      'https://picsum.photos/seed/206/600',
-                                      width: 300,
-                                      height: 200,
-                                      fit: BoxFit.cover,
-                                    ),
-                                  ),
-                                ),
-                                Align(
-                                  alignment:
-                                      const AlignmentDirectional(-1.05, 0.67),
-                                  child: Padding(
-                                    padding:
-                                        const EdgeInsetsDirectional.fromSTEB(
-                                            10, 10, 0, 0),
-                                    child: Text(
-                                      'SongName',
-                                      style: GoogleFonts.acme(
-                                        color: Colors.white,
-                                        fontSize: 18.0,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                Align(
-                                  alignment:
-                                      const AlignmentDirectional(-0.78, 0.95),
-                                  child: Text(
-                                    'subtitle',
-                                    style: GoogleFonts.acme(
-                                      color: Colors.white,
-                                      fontSize: 18.0,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        Card(
-                          clipBehavior: Clip.antiAliasWithSaveLayer,
-                          color: Colors.black,
-                          elevation: 4,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Container(
-                            width: 150,
-                            height: 150,
-                            child: Stack(
-                              alignment: const AlignmentDirectional(0, 1),
-                              children: [
-                                Align(
-                                  alignment: const AlignmentDirectional(0, 0),
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(8),
-                                    child: Image.network(
-                                      'https://picsum.photos/seed/206/600',
-                                      width: 300,
-                                      height: 200,
-                                      fit: BoxFit.cover,
-                                    ),
-                                  ),
-                                ),
-                                Align(
-                                  alignment:
-                                      const AlignmentDirectional(-1.05, 0.67),
-                                  child: Padding(
-                                    padding:
-                                        const EdgeInsetsDirectional.fromSTEB(
-                                            10, 10, 0, 0),
-                                    child: Text(
-                                      'SongName',
-                                      style: GoogleFonts.acme(
-                                        color: Colors.white,
-                                        fontSize: 18.0,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                Align(
-                                  alignment:
-                                      const AlignmentDirectional(-0.78, 0.95),
-                                  child: Text(
-                                    'subtitle',
-                                    style: GoogleFonts.acme(
-                                      color: Colors.white,
-                                      fontSize: 18.0,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
+                        SizedBox(width: 10),
                       ],
                     ),
                   ),
+                  SizedBox(width: 10),
+                ],
+              ),
+            )),
+            SliverToBoxAdapter(
+              child: Align(
+                alignment: const AlignmentDirectional(-1, -1),
+                child: Padding(
+                  padding: const EdgeInsetsDirectional.fromSTEB(10, 40, 0, 10),
+                  child: Text(
+                    'One Click Playlists',
+                    style: GoogleFonts.acme(
+                      color: Colors.black,
+                      fontSize: 25.0,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
+              ),
+            ),
+            SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) {
+                  return StreamBuilder(
+                    stream: FirebaseFirestore.instance
+                        .collection('playlist')
+                        .snapshots(),
+                    builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(
+                          child: CircularProgressIndicator(),
+                        );
+                      }
+                      if (snapshot.hasError) {
+                        return Center(
+                          child: Text('Error: ${snapshot.error}'),
+                        );
+                      }
+                      if (snapshot.data!.docs.isEmpty) {
+                        return const Center(
+                          child: Text('No songs found.'),
+                        );
+                      }
+                      return ListView.builder(
+                        itemCount: snapshot.data!.docs.length,
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemBuilder: (context, index) {
+                          var song = snapshot.data!.docs[index];
+                          var songData = song.data() as Map<String, dynamic>;
+                          String artist =
+                              songData['artist'] ?? 'Unknown Artist';
+                          String name = songData['name'] ?? 'Unknown Name';
+                          String url = songData['url'] ??
+                              ''; // You might want to handle this differently based on your use case
+                          String imageurl =
+                              songData['imageurl'] ?? 'default_image_url';
+
+                          return FirebaseSongList(
+                            songName: name,
+                            subtitle: artist,
+                            url: url,
+                            index: index,
+                            snapshot: snapshot,
+                            imageurl: imageurl,
+                          );
+                        },
+                      );
+                    },
+                  );
+                },
+                childCount: 1,
               ),
             ),
           ],
@@ -698,17 +535,17 @@ class _HomePageState extends State<HomePage> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.history),
+              leading: const Icon(Icons.download_done),
               title: Text(
-                'History',
+                'Downloads',
                 style: GoogleFonts.acme(
                   color: Colors.black,
                   fontSize: 20.0,
                 ),
               ),
               onTap: () {
-                // Handle Option 2 tap
-                Navigator.pop(context); // Close the drawer
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => DownloadPage()));
               },
             ),
             ListTile(
@@ -730,38 +567,10 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
-
-  void _searchSongs(String query) async {
-    try {
-      final response = await http.get(
-        Uri.parse('$apiUrl?q=$query'),
-        headers: {
-          'X-RapidAPI-Key':
-              '049340387emsh1ef19f738c7e73bp152296jsnfe5238b04e6d',
-          'X-RapidAPI-Host': 'youtube-music6.p.rapidapi.com'
-        },
-      );
-
-      if (response.statusCode == 200) {
-        // Parse the response and update _searchResults
-        setState(() {
-          _searchResults.clear();
-          // Assuming your API returns a list of song names as strings
-          _searchResults.addAll(response.body.split(','));
-          print(_searchResults.length);
-          print(_searchResults.first);
-        });
-      } else {
-        throw Exception('Failed to load data: ${response.statusCode}');
-      }
-    } catch (e) {
-      print('Error: $e');
-    }
-  }
 }
 
 class HomePageContainer extends StatefulWidget {
-  const HomePageContainer({Key? key}) : super(key: key);
+  HomePageContainer({Key? key}) : super(key: key);
 
   @override
   _HomePageContainerState createState() => _HomePageContainerState();
@@ -772,6 +581,8 @@ class _HomePageContainerState extends State<HomePageContainer> {
   final AudioPlayer playaudio = AudioPlayer();
   bool isplaying = false;
   int _selectedIndex = 0;
+  String? songName;
+  String? url;
 
   void _onItemTapped(int index) {
     setState(() {
@@ -783,30 +594,37 @@ class _HomePageContainerState extends State<HomePageContainer> {
   final List<Widget> _pages = [
     const HomePage(),
     const TopSongs(),
-    const FavoriteSongs(),
+    const SearchPage(),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color.fromARGB(245, 216, 126, 236),
       body: _pages[_selectedIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        fixedColor: Colors.white,
-        backgroundColor: const Color.fromARGB(245, 216, 126, 236),
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.my_library_music),
-            label: 'Top Songs',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.favorite),
-            label: 'Favorite',
+      bottomNavigationBar: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          MiniPlayer(),
+          BottomNavigationBar(
+            fixedColor: Colors.white,
+            backgroundColor: const Color.fromARGB(245, 216, 126, 236),
+            currentIndex: _selectedIndex,
+            onTap: _onItemTapped,
+            items: const [
+              BottomNavigationBarItem(
+                icon: Icon(Icons.home),
+                label: 'Home',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.my_library_music),
+                label: 'Top Songs',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.search),
+                label: 'Search',
+              ),
+            ],
           ),
         ],
       ),

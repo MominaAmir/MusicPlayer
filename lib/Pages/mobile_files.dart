@@ -62,7 +62,7 @@ class _LocalDeviceDataState extends State<LocalDeviceData> {
                     Navigator.pop(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => const HomePageContainer()));
+                            builder: (context) =>  HomePageContainer()));
                   },
                 ),
                 title: Align(

@@ -124,13 +124,9 @@ class _SongListState extends State<SongList> {
           case "delete":
             if (controller.localsonglist.isNotEmpty) {
               controller.localsonglist.removeAt(index);
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                content: const Text("Song Deleted"),
-                duration: const Duration(seconds: 3),
-                action: SnackBarAction(
-                  label: 'UNDO',
-                  onPressed: () {},
-                ),
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                content: Text("Song Deleted"),
+                duration: Duration(seconds: 3),
               ));
             } else {
               print("List is empty");
@@ -161,7 +157,7 @@ class _SongListState extends State<SongList> {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: const Color.fromARGB(255, 229, 158, 250).withOpacity(0.3),
+        color: Color.fromARGB(255, 66, 20, 80).withOpacity(0.3),
         borderRadius: BorderRadius.circular(20),
       ),
       child: ListTile(

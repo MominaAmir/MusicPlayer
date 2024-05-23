@@ -88,6 +88,9 @@ flutter:
     - lib/assest/billi ellish.jpeg
     - lib/assest/bts.jpg
     - lib/assest/Diljit-Dosanjh.jpg
+    - lib/assest/animenow.jpeg
+    - lib/assest/cocomelonCover.jpg
+    - lib/assest/cocomelon.jpg
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

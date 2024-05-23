@@ -1,7 +1,9 @@
 // ignore_for_file: avoid_print
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:musicplayer/component/FirebaseSongList.dart';
 
 class TopSongs extends StatefulWidget {
   const TopSongs({super.key});
@@ -65,6 +67,57 @@ class _TopSongsState extends State<TopSongs> {
                   centerTitle: true,
                   elevation: 10,
                 ),
+               SliverList(
+      delegate: SliverChildBuilderDelegate(
+        (context, index) {
+          return StreamBuilder(
+            stream: FirebaseFirestore.instance
+                .collection('TopSongs')
+                .snapshots(),
+            builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(
+                  child: CircularProgressIndicator(),
+                );
+              }
+              if (snapshot.hasError) {
+                return Center(
+                  child: Text('Error: ${snapshot.error}'),
+                );
+              }
+              if (snapshot.data!.docs.isEmpty) {
+                return const Center(
+                  child: Text('No songs found.'),
+                );
+              }
+              return ListView.builder(
+                itemCount: snapshot.data!.docs.length,
+                shrinkWrap: true,
+                physics: NeverScrollableScrollPhysics(),
+                itemBuilder: (context, index) {
+                  var song = snapshot.data!.docs[index];
+                  var songData = song.data() as Map<String, dynamic>;
+                  String artist = songData['artist'];
+                  String name = songData['name'];
+                  String url = songData['url'];
+                            String imageurl = songData['imageurl'];
+                  return FirebaseSongList(
+                    songName: name,
+                    subtitle: artist,
+                    url: url,
+                    index: index,
+                    snapshot: snapshot,
+                              imageurl:imageurl,
+                  );
+                },
+              );
+            },
+          );
+        },
+        childCount: 1,
+              ),
+    ),
+
               ],
             ),
           ),

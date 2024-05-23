@@ -1,54 +1,56 @@
 import 'package:flutter/material.dart';
-import 'package:just_audio/just_audio.dart';
-import 'package:musicplayer/component/FirebaseSongList.dart';
+import 'package:musicplayer/model/music_player_model.dart';
+import 'package:provider/provider.dart';
 
-class MiniPlayer extends StatefulWidget {
-  final String songName;
-  final String url;
-
-  MiniPlayer({
-    required this.songName,
-    required this.url,
-  });
-
-  @override
-  _MiniPlayerState createState() => _MiniPlayerState();
-}
-
-class _MiniPlayerState extends State<MiniPlayer> {
-  final AudioPlayer audioPlayer = AudioPlayerSingleton().audioPlayer;
-  bool isPlaying = false;
-
-  @override
-  void initState() {
-    super.initState();
-    audioPlayer.playerStateStream.listen((state) {
-      setState(() {
-        isPlaying = state.playing;
-      });
-    });
-  }
-
+class MiniPlayer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    var musicPlayerModel = Provider.of<MusicPlayerModel>(context);
+
     return Container(
-      color: Colors.black54,
-      child: ListTile(
-        leading: Icon(Icons.music_note, color: Colors.white),
-        title: Text(
-          widget.songName,
-          style: TextStyle(color: Colors.white),
-        ),
-        trailing: IconButton(
-          icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow, color: Colors.white),
-          onPressed: () {
-            if (isPlaying) {
-              audioPlayer.pause();
-            } else {
-              audioPlayer.play();
-            }
-          },
-        ),
+      // padding: EdgeInsets.all(5.0),
+      margin: EdgeInsets.all(15),
+      decoration: BoxDecoration(
+        color: Colors.black54.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(10.0),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [ 
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              IconButton(
+                icon: Icon(
+                  musicPlayerModel.isPlaying ? Icons.pause : Icons.play_arrow,
+                  color: Colors.white,
+                ),
+                onPressed: musicPlayerModel.playPause,
+              ),
+              Expanded(
+                child: Text(
+                  'Now Playing:    ${musicPlayerModel.songName}',
+                  style: TextStyle(color: Colors.white),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          Row(
+              children: [
+                Text(musicPlayerModel.playing.toString().split('.')[0]),
+                Slider(
+                    min: const Duration(microseconds: 0).inSeconds.toDouble(),
+                    value: musicPlayerModel.playing.inSeconds.toDouble(),
+                    max: musicPlayerModel.duration.inSeconds.toDouble(),
+                    onChanged: (value) {
+                      musicPlayerModel.sliderChanges(value.toInt());
+                      value = value;
+                    }),
+                      Text(musicPlayerModel.duration.toString().split('.')[0]),
+              ],
+            ),
+        ],
       ),
     );
   }
