@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:musicplayer/Pages/playScreen.dart';
+import 'package:musicplayer/model/music_player_model.dart';
 import 'package:musicplayer/model/song_data_controller.dart';
 import 'package:musicplayer/provider/SongModelProvider.dart';
 import 'package:on_audio_query/on_audio_query.dart';
@@ -54,9 +55,7 @@ class _SongListState extends State<SongList> {
     }
   }
 
-  void showPopupMenu(BuildContext context, int index, SongDataController controller) {
-    final RenderBox overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
-    final Offset offset = overlay.localToGlobal(Offset.zero);
+  void showPopupMenu(BuildContext context, int index, SongDataController controller,  Offset tapPosition) {
     final menuItems = [
       PopupMenuItem(
         value: "delete",
@@ -90,31 +89,16 @@ class _SongListState extends State<SongList> {
           ],
         ),
       ),
-      PopupMenuItem(
-        value: "favorite",
-        child: Row(
-          children: [
-            const Icon(Icons.favorite),
-            const SizedBox(width: 8),
-            Text(
-              "Favorite",
-              style: GoogleFonts.arimo(
-                color: Colors.black,
-                fontSize: 15.0,
-              ),
-            ),
-          ],
-        ),
-      ),
+      
     ];
 
     showMenu(
       context: context,
-      position: RelativeRect.fromLTRB(
-        offset.dx,
-        offset.dy + MediaQuery.of(context).padding.top + kToolbarHeight,
-        offset.dx + MediaQuery.of(context).size.width,
-        offset.dy + MediaQuery.of(context).padding.top + kToolbarHeight + 100,
+     position: RelativeRect.fromLTRB(
+        tapPosition.dx,
+        tapPosition.dy,
+        tapPosition.dx + 10,
+        tapPosition.dy + 10,
       ),
       items: menuItems,
       initialValue: null,
@@ -142,19 +126,34 @@ class _SongListState extends State<SongList> {
               ),
             ));
             break;
-          case "favorite":
-            break;
-          default:
-            break;
         }
       }
     });
   }
 
+   void _playNextSong() {
+    final nextIndex = widget.index + 1;
+    if (nextIndex < widget.controller.localsonglist.length) {
+      final nextSong = widget.controller.localsonglist[nextIndex];
+      Provider.of<MusicPlayerModel>(context, listen: false)
+          .play(nextSong.title, nextSong.uri!, artwork as String);
+      // Update the currently playing song in the UI if needed
+      print("start the next song playlist");
+      setState(() {
+        widget.songModel = nextSong;
+        widget.songName = nextSong.title;
+        widget.subtitle = nextSong.artist;
+        widget.index = nextIndex;
+      });
+    } else {
+      print("Reached end of the playlist");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: const EdgeInsets.all(8),
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: Color.fromARGB(255, 66, 20, 80).withOpacity(0.3),
@@ -166,26 +165,29 @@ class _SongListState extends State<SongList> {
             : const Icon(Icons.music_note, size: 40),
         title: Text(
           widget.songName!,
+          style: TextStyle(color: Colors.white),
           maxLines: 1,
         ),
         subtitle: Text(
           widget.subtitle!,
+          style: TextStyle(color: Colors.white),
           maxLines: 1,
         ),
-        trailing: IconButton(
-          onPressed: () {
-            showPopupMenu(context, widget.index, widget.controller);
-          },
-          icon: const Icon(Icons.more_vert),
-        ),
-        onTap: () {
+       
+        trailing:  GestureDetector(
+                            onTapDown: (TapDownDetails details) {
+            showPopupMenu(context, widget.index, widget.controller, details.globalPosition);
+                            },
+                            child: const Icon(Icons.more_vert),
+                          ),
+        onTap: () async{
           context.read<SongModelProvider>().setId(widget.songModel!.id);
           Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => PlayScreen(
                 songModel: widget.songModel!,
-                audioplayer: playaudio,
+                playnextsong: _playNextSong,
               ),
             ),
           );
@@ -214,41 +216,3 @@ class AudioPlayerSingleton {
   AudioPlayer get audioPlayer => _audioPlayer;
 }
 
-
-// SliverList(
-//                   delegate: SliverChildBuilderDelegate(
-//                     (context, index) {
-//                       final song = controller.songlist[index];
-//                       if (controller.songlist.isEmpty) {
-//                         return const Center(
-//                           child: Text("No Songs Found"),
-//                         );
-//                       } else {
-//                         return ListTile(
-//                           leading: const Icon(Icons.music_note),
-//                           title: Text(song.displayNameWOExt),
-//                           subtitle: Text("${song.artistId}"),
-//                           trailing: IconButton(
-//                             onPressed: () {
-//                               showPopupMenu(context, index , controller);
-//                             },
-//                            icon: const Icon(Icons.more_vert),
-//                           ),
-//                           onTap: () {
-//                             Navigator.push(
-//                               context,
-//                               MaterialPageRoute(
-//                                 builder: (context) => PlayScreen(
-//                                   songModel: song,
-//                                   audioplayer: playaudio,
-//                                 ),
-//                               ),
-//                             );
-//                             PlaySong(song.uri);
-//                           },
-//                         );
-//                       }
-//                     },
-//                     childCount: controller.songlist.length,
-//                   ),
-//                 ),

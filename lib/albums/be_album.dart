@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:musicplayer/Pages/home.dart';
 import 'package:musicplayer/Pages/miniplayer.dart';
 import 'package:musicplayer/component/FirebaseSongList.dart';
+import 'package:musicplayer/component/songSearch.dart';
 
 class BE_Album extends StatefulWidget {
   const BE_Album({Key? key}) : super(key: key);
@@ -15,6 +16,9 @@ class BE_Album extends StatefulWidget {
 }
 
 class _BE_AlbumState extends State<BE_Album> {
+  
+  List<DocumentSnapshot> _songs = [];
+  AsyncSnapshot<QuerySnapshot<Object?>>? _snapshot;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -71,6 +75,12 @@ class _BE_AlbumState extends State<BE_Album> {
                           size: 35,
                         ),
                         onPressed: () {
+                            if (_snapshot != null) {
+                            showSearch(
+                              context: context,
+                              delegate: SongSearchDelegate(_songs, _snapshot!),
+                            );
+                          }
                           print('Search IconButton pressed ...');
                         },
                       ),
@@ -145,6 +155,10 @@ class _BE_AlbumState extends State<BE_Album> {
                               child: Text('No songs found.'),
                             );
                           }
+                          
+                          _snapshot = snapshot; // Set the snapshot for the search delegate
+                          _songs = snapshot.data!.docs; // Update the songs list
+
                           return ListView.builder(
                             itemCount: snapshot.data!.docs.length,
                             shrinkWrap: true,

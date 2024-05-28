@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
@@ -6,7 +8,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'dart:io';
 
 class MusicPlayerModel extends ChangeNotifier {
-  final AudioPlayer _audioPlayer = AudioPlayer();
+  late final AudioPlayer _audioPlayer;
   String _songName = 'null';
   String _url = '';
   String _imageurl = '';
@@ -14,6 +16,8 @@ class MusicPlayerModel extends ChangeNotifier {
   Duration duration = const Duration();
   Duration playing = const Duration();
   List<Map<String, String>> downloadedSongs = [];
+  Map<String, bool> _isDownloading = {};
+  Map<String, bool> _isDownloaded = {};
 
   String get songName => _songName;
   String get url => _url;
@@ -21,8 +25,16 @@ class MusicPlayerModel extends ChangeNotifier {
   bool get isPlaying => _isPlaying;
 
   MusicPlayerModel() {
+    _audioPlayer = AudioPlayer();
+
     _audioPlayer.positionStream.listen((play) {
       playing = play;
+
+      // Check if the playtime equals the duration
+      if (playing >= duration && duration != Duration.zero) {
+        _audioPlayer.seek(Duration.zero);
+      }
+
       notifyListeners();
     });
 
@@ -44,42 +56,87 @@ class MusicPlayerModel extends ChangeNotifier {
     _url = urlOrUri;
     _imageurl = imageurl;
 
-    if (Uri.tryParse(urlOrUri)?.isAbsolute ?? false) {
-      await _audioPlayer.setUrl(urlOrUri);
-    } else {
-      final file = File(urlOrUri);
-      if (await file.exists()) {
-        await _audioPlayer.setAudioSource(
-          AudioSource.uri(
-            Uri.file(urlOrUri),
-            tag: MediaItem(
-              id: songName ?? 'Unknown Song',
-              album: "Album",
-              title: songName ?? 'Unknown Song',
-              artUri: Uri.tryParse(imageurl ?? ''),
-            ),
-          ),
-        );
-      } else {
-        print("File not found: $urlOrUri");
-      }
+    if (_audioPlayer.playing) {
+      await _audioPlayer.pause();
     }
 
-    await _audioPlayer.play();
+    try {
+      if (Uri.tryParse(urlOrUri)?.isAbsolute ?? false) {
+        await _audioPlayer.setUrl(urlOrUri);
+      } else {
+        final file = File(urlOrUri);
+        if (await file.exists()) {
+          final mediaItem = MediaItem(
+            id: songName,
+            album: "Album",
+            title: songName,
+            artUri: Uri.tryParse(imageurl ?? ''),
+          );
+
+          await _audioPlayer.setAudioSource(
+            AudioSource.file(
+              file.path,
+              tag: mediaItem,
+            ),
+          );
+        } else {
+          print("File not found: $urlOrUri");
+          return; // Return early if the file does not exist
+        }
+      }
+
+      await _audioPlayer.play();
+      notifyListeners();
+    } catch (e) {
+      print("Error playing song: $e");
+    }
+  }
+ final _downloadedSongsStreamController = StreamController<List<Map<String, String>>>();
+
+  Stream<List<Map<String, String>>> get downloadedSongsStream => _downloadedSongsStreamController.stream;
+
+  void removeDownloadedSong(int index) async{
+    await downloadedSongs.removeAt(index);
+   _downloadedSongsStreamController.add(downloadedSongs);
     notifyListeners();
   }
+  
+  void deleteFile(String filePath) async {
+  final file = File(filePath);
+  if (await file.exists()) {
+    await file.delete();
+  }
+  notifyListeners();
+}
 
-  Future<void> downloadSong(String url, String songName) async {
+  Future<void> downloadSong(String url, String songName, BuildContext context, String imageurl) async {
+    _isDownloading[songName] = true;
+    _isDownloaded[songName] = false;
+    notifyListeners();
+
     try {
       final directory = await getApplicationDocumentsDirectory();
       final filePath = '${directory.path}/$songName.mp3';
       final ref = FirebaseStorage.instance.refFromURL(url);
       final file = File(filePath);
       await ref.writeToFile(file);
-      downloadedSongs.add({'name': songName, 'path': filePath});
+      downloadedSongs.add({'name': songName, 'path': filePath, 'url': url , 'imageurl': imageurl});
+
+      _isDownloading[songName] = false;
+      _isDownloaded[songName] = true;
       notifyListeners();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('$songName downloaded successfully!'),
+          duration: Duration(seconds: 3),
+        ),
+      );
       print('Downloaded $songName to $filePath');
     } catch (e) {
+      _isDownloading[songName] = false;
+      _isDownloaded[songName] = false;
+      notifyListeners();
       print('Error downloading song: $e');
     }
   }
@@ -92,6 +149,9 @@ class MusicPlayerModel extends ChangeNotifier {
     }).toList();
     return downloadedSongs;
   }
+
+  bool isDownloading(String songName) => _isDownloading[songName] ?? false;
+  bool isDownloaded(String songName) => _isDownloaded[songName] ?? false;
 
   Future<void> pause() async {
     await _audioPlayer.pause();
@@ -123,41 +183,126 @@ class MusicPlayerModel extends ChangeNotifier {
 
 
 
+
+
+
+
+
+
+
+
 // import 'package:flutter/material.dart';
 // import 'package:just_audio/just_audio.dart';
+// import 'package:just_audio_background/just_audio_background.dart';
+// import 'package:path_provider/path_provider.dart';
+// import 'package:firebase_storage/firebase_storage.dart';
+// import 'dart:io';
 
 // class MusicPlayerModel extends ChangeNotifier {
-//   final AudioPlayer _audioPlayer = AudioPlayer();
+//   late final AudioPlayer _audioPlayer;
 //   String _songName = 'null';
-//   late String _url;
-
+//   String _url = '';
+//   String _imageurl = '';
+//   bool _isPlaying = false;
 //   Duration duration = const Duration();
 //   Duration playing = const Duration();
+//   List<Map<String, String>> downloadedSongs = [];
 
 //   String get songName => _songName;
 //   String get url => _url;
-//   bool get isPlaying => _audioPlayer.playing;
+//   String get imageurl => _imageurl;
+//   bool get isPlaying => _isPlaying;
 
 //   MusicPlayerModel() {
+//     _audioPlayer = AudioPlayer();
+
 //     _audioPlayer.positionStream.listen((play) {
 //       playing = play;
-//       notifyListeners(); // Ensure UI updates continuously
+
+//       // Check if the playtime equals the duration
+//       if (playing >= duration && duration != Duration.zero) {
+//         _audioPlayer.seek(Duration.zero);
+//       }
+
+//       notifyListeners();
 //     });
 
 //     _audioPlayer.durationStream.listen((dur) {
 //       if (dur != null) {
 //         duration = dur;
-//         notifyListeners(); // Ensure UI updates continuously
+//         notifyListeners();
 //       }
+//     });
+
+//     _audioPlayer.playerStateStream.listen((playerState) {
+//       _isPlaying = playerState.playing;
+//       notifyListeners();
 //     });
 //   }
 
-//   Future<void> play(String songName, String url) async {
+//   Future<void> play(String songName, String urlOrUri, String imageurl) async {
 //     _songName = songName;
-//     _url = url;
-//     await _audioPlayer.setUrl(url);
-//     await _audioPlayer.play();
-//     notifyListeners();
+//     _url = urlOrUri;
+//     _imageurl = imageurl;
+
+//     if (_audioPlayer.playing) {
+//       await _audioPlayer.pause();
+//     }
+
+//     try {
+//       if (Uri.tryParse(urlOrUri)?.isAbsolute ?? false) {
+//         await _audioPlayer.setUrl(urlOrUri);
+//       } else {
+//         final file = File(urlOrUri);
+//         if (await file.exists()) {
+//           final mediaItem = MediaItem(
+//             id: songName,
+//             album: "Album",
+//             title: songName,
+//             artUri: Uri.tryParse(imageurl ?? ''),
+//           );
+
+//           await _audioPlayer.setAudioSource(
+//             AudioSource.uri(
+//               Uri.file(file.path),
+//               tag: mediaItem,
+//             ),
+//           );
+//         } else {
+//           print("File not found: $urlOrUri");
+//           return; // Return early if the file does not exist
+//         }
+//       }
+
+//       await _audioPlayer.play();
+//       notifyListeners();
+//     } catch (e) {
+//       print("Error playing song: $e");
+//     }
+//   }
+
+//   Future<void> downloadSong(String url, String songName) async {
+//     try {
+//       final directory = await getApplicationDocumentsDirectory();
+//       final filePath = '${directory.path}/$songName.mp3';
+//       final ref = FirebaseStorage.instance.refFromURL(url);
+//       final file = File(filePath);
+//       await ref.writeToFile(file);
+//       downloadedSongs.add({'name': songName, 'path': filePath});
+//       notifyListeners();
+//       print('Downloaded $songName to $filePath');
+//     } catch (e) {
+//       print('Error downloading song: $e');
+//     }
+//   }
+
+//   Future<List<Map<String, String>>> fetchDownloadedSongs() async {
+//     final directory = await getApplicationDocumentsDirectory();
+//     final files = directory.listSync().where((file) => file.path.endsWith('.mp3')).toList();
+//     downloadedSongs = files.map((file) {
+//       return {'name': file.path.split('/').last, 'path': file.path};
+//     }).toList();
+//     return downloadedSongs;
 //   }
 
 //   Future<void> pause() async {
@@ -177,12 +322,6 @@ class MusicPlayerModel extends ChangeNotifier {
 //   Future<void> sliderChanges(int seconds) async {
 //     Duration duration = Duration(seconds: seconds);
 //     await _audioPlayer.seek(duration);
-//     notifyListeners();
-//   }
-
-//   Future<void> playNext() async {
-//     // Implement logic for playing the next song
-//     print("Next Song Playing");
 //     notifyListeners();
 //   }
 

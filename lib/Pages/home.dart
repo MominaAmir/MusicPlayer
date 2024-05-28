@@ -6,6 +6,7 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 // import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:musicplayer/Pages/downloads.dart';
@@ -26,7 +27,6 @@ import 'package:musicplayer/model/HomePageModel.dart';
 // import 'package:musicplayer/model/albumModel.dart';
 import 'package:musicplayer/model/song_data_controller.dart';
 import 'package:on_audio_query/on_audio_query.dart';
-import 'package:http/http.dart' as http;
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -41,16 +41,37 @@ class _HomePageState extends State<HomePage> {
   final AudioPlayer playaudio = AudioPlayer();
   late HomePageModel _model;
   late SongDataController controller = new SongDataController();
-  final String apiUrl = 'https://youtube-music6.p.rapidapi.com/ytmusic/';
-  late TextEditingController _searchController;
-  List<String> _searchResults = [];
+  late BannerAd bannerads;
+
+  bool isAdLoaded = false;
+  var adUnit = "ca-app-pub-3940256099942544/9214589741";
+
+  initBannerAd() {
+    bannerads = BannerAd(
+      size: AdSize.banner,
+      adUnitId: adUnit,
+      listener: BannerAdListener(
+        onAdLoaded: (ad) {
+          setState(() {
+            isAdLoaded = true;
+          });
+        },
+        onAdFailedToLoad: (ad, error) {
+          ad.dispose();
+          print(error);
+        },
+      ),
+      request: const AdRequest(),
+    );
+    bannerads.load();
+  }
 
   @override
   void initState() {
     super.initState();
     _model = HomePageModel();
     _model.initState(context);
-    _searchController = TextEditingController();
+    initBannerAd();
   }
 
   Icon customIcon = const Icon(
@@ -120,6 +141,16 @@ class _HomePageState extends State<HomePage> {
               centerTitle: true,
               elevation: 10,
             ),
+            SliverToBoxAdapter(
+                child: Align(
+              child: isAdLoaded
+                  ? SizedBox(
+                      height: bannerads.size.height.toDouble(),
+                      width: bannerads.size.width.toDouble(),
+                      child: AdWidget(ad: bannerads),
+                    )
+                  : SizedBox(),
+            )),
             SliverToBoxAdapter(
               child: Align(
                 alignment: const AlignmentDirectional(-1, -1),
@@ -363,7 +394,7 @@ class _HomePageState extends State<HomePage> {
                             child: Text(
                               'Anime Now ',
                               style: GoogleFonts.acme(
-                                color: Colors.black,
+                                color: Colors.white,
                                 fontSize: 20.0,
                               ),
                             ),
@@ -408,7 +439,7 @@ class _HomePageState extends State<HomePage> {
                           child: Text(
                             'Cocomelon ',
                             style: GoogleFonts.acme(
-                              color: Colors.black,
+                              color: Colors.white,
                               fontSize: 20.0,
                             ),
                           ),
@@ -558,7 +589,6 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
               onTap: () {
-                // Handle Option 3 tap
                 Navigator.pop(context); // Close the drawer
               },
             ),
@@ -600,11 +630,9 @@ class _HomePageContainerState extends State<HomePageContainer> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromARGB(245, 216, 126, 236),
-      body: _pages[_selectedIndex],
-      bottomNavigationBar: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
+        backgroundColor: const Color.fromARGB(245, 216, 126, 236),
+        body: _pages[_selectedIndex],
+        bottomNavigationBar: Column(mainAxisSize: MainAxisSize.min, children: [
           MiniPlayer(),
           BottomNavigationBar(
             fixedColor: Colors.white,
@@ -626,9 +654,6 @@ class _HomePageContainerState extends State<HomePageContainer> {
               ),
             ],
           ),
-        ],
-      ),
-      // bottomSheet: const MiniPlayer(),
-    );
+        ]));
   }
 }

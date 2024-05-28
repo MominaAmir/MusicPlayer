@@ -55,12 +55,42 @@ class _FirebaseSongListState extends State<FirebaseSongList> {
           widget.subtitle!,
           maxLines: 1,
         ),
-        trailing: IconButton(
-          onPressed: () {
-            Provider.of<MusicPlayerModel>(context, listen: false).downloadSong(widget.url!, widget.songName!);
-          },
-          icon: Icon(Icons.download_sharp),
-        ),
+        trailing: Consumer<MusicPlayerModel>(
+  builder: (context, model, child) {
+    bool isDownloading = model.isDownloading(widget.songName!);
+    bool isDownloaded = model.isDownloaded(widget.songName!);
+    return IconButton(
+      onPressed: isDownloaded
+          ? null 
+          : () {
+              Provider.of<MusicPlayerModel>(context, listen: false)
+                  .downloadSong(widget.url!, widget.songName!, context, widget.imageurl!)
+                  .then((_) {
+                // Show Snackbar when download is completed
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('${widget.songName} Downloaded Successfully!'),
+                    duration: Duration(seconds: 3),
+                  ),
+                );
+              });
+            },
+      icon: isDownloading
+          ? CircularProgressIndicator() 
+          : Icon(
+              isDownloaded ? Icons.done : Icons.download_sharp,
+              color: isDownloaded ? Colors.green : null, 
+            ),
+    );
+  },
+),
+
+        // trailing: IconButton(
+        //   onPressed: () {
+        //     Provider.of<MusicPlayerModel>(context, listen: false).downloadSong(widget.url!, widget.songName!);
+        //   },
+        //   icon: Icon(Icons.download_sharp),
+        // ),
         onTap: () async {
           try {
             Provider.of<MusicPlayerModel>(context, listen: false).play(widget.songName!, widget.url!, widget.imageurl!);

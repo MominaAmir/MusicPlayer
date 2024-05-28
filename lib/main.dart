@@ -1,6 +1,9 @@
 // ignore_for_file: prefer_const_constructors
 
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
+import 'package:flutter_downloader/flutter_downloader.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 import 'package:musicplayer/Pages/splash_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -9,37 +12,69 @@ import 'package:musicplayer/provider/SongModelProvider.dart';
 import 'firebase_options.dart';
 import 'package:provider/provider.dart';
 
-
-Future <void> main() async {
+Future<void> main() async {
+  // var devices =["958FCF36108DCF41C72B37C6BD1C51FA"];
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
-);
+  );
+  await MobileAds.instance.initialize;
+  // RequestConfiguration requestConfiguration = RequestConfiguration(testDeviceIds: devices);
+  // MobileAds.instance.updateRequestConfiguration(requestConfiguration);
 //  await JustAudioBackground.init(
 //     androidNotificationChannelId: 'com.ryanheise.bg_demo.channel.audio',
 //     androidNotificationChannelName: 'Audio playback',
 //     androidNotificationOngoing: true,
 // );
-    return runApp( 
-       MultiProvider(
-      providers: [ChangeNotifierProvider(create: (context) => SongModelProvider()),
-     ChangeNotifierProvider(
-      create: (_) => MusicPlayerModel()),
-      ], child: MyApp(),
-      ),
+  try {
+    await FlutterDownloader.initialize(
+      debug: true,
     );
+    print('FlutterDownloader initialized successfully');
+  } catch (e) {
+    print('Initialization failed: $e');
+  }
+  adloaded();
+  return runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (context) => SongModelProvider()),
+        ChangeNotifierProvider(create: (_) => MusicPlayerModel()),
+      ],
+      child: MyApp(),
+    ),
+  );
 }
 
+AppOpenAd? _openAd;
+
+bool isAdLoaded = false;
+
+adloaded() async {
+  AppOpenAd.load(
+      adUnitId: 'ca-app-pub-3940256099942544/9257395921',
+      request: AdRequest(),
+      adLoadCallback: AppOpenAdLoadCallback(onAdLoaded: (ad) {
+        _openAd = ad;
+        isAdLoaded = true;
+          _openAd!.show();
+      }, onAdFailedToLoad: (error) {
+        _openAd!.dispose();
+      }),
+      );
+      
+}
 
 class MyApp extends StatelessWidget {
+  static final navigatorKey = GlobalKey<NavigatorState>();
   const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-        title: 'Harmony App',
-        home: SplashScreen(), // Your main page
-      
+      navigatorKey: navigatorKey,
+      title: 'Harmony App',
+      home: SplashScreen(), // Your main page
     );
   }
 }

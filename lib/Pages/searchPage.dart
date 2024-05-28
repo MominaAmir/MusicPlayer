@@ -1,8 +1,12 @@
+import 'package:musicplayer/model/albumModel.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
-import 'package:musicplayer/model/albumModel.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:musicplayer/model/music_player_model.dart';
+import 'package:provider/provider.dart';
 
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key});
@@ -13,16 +17,28 @@ class SearchPage extends StatefulWidget {
 
 class _SearchPageState extends State<SearchPage> {
   final String apiUrl = 'https://youtube-music6.p.rapidapi.com/ytmusic/';
+  final String downloaderApiUrl =
+      'https://youtube-mp3-downloader2.p.rapidapi.com/ytmp3/ytmp3/';
   late TextEditingController _searchController;
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
 
-  final List<AlbumSongs> _searchResults = [];
-  late List<AlbumSongs> displayList;
+  List<AlbumSongs> _searchResults = [];
+  List<AlbumSongs> displayList = [];
 
   @override
   void initState() {
     super.initState();
     _searchController = TextEditingController();
+    _searchResults = [];
     displayList = List.from(_searchResults);
+
+    // Initialize notifications
+    const AndroidInitializationSettings initializationSettingsAndroid =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+    final InitializationSettings initializationSettings =
+        InitializationSettings(android: initializationSettingsAndroid);
+    flutterLocalNotificationsPlugin.initialize(initializationSettings);
   }
 
   @override
@@ -30,6 +46,16 @@ class _SearchPageState extends State<SearchPage> {
     _searchController.dispose();
     super.dispose();
   }
+
+
+Future<void> saveDownloadedSong(String title, String artist, String imageUrl, String audioUrl) async {
+  final SharedPreferences prefs = await SharedPreferences.getInstance();
+  List<String>? downloadedSongs = prefs.getStringList('downloaded_songs') ?? [];
+
+  downloadedSongs.add('$title,$artist,$imageUrl,$audioUrl');
+  await prefs.setStringList('downloaded_songs', downloadedSongs);
+}
+
 
   void _searchSongs(String query) async {
     try {
@@ -43,18 +69,20 @@ class _SearchPageState extends State<SearchPage> {
       );
 
       if (response.statusCode == 200) {
-        final List<dynamic> data = jsonDecode(response.body);
+        final data = jsonDecode(response.body);
 
         // Debug: print the API response
         print('API Response: $data');
 
         setState(() {
-          _searchResults.clear();
-          _searchResults
-              .addAll(data.map((e) => AlbumSongs.fromJson(e)).toList());
+          _searchResults =
+              (data as List).map((item) => AlbumSongs.fromJson(item)).toList();
           displayList = List.from(_searchResults);
         });
       } else {
+        setState(() {
+          displayList = [];
+        });
         throw Exception('Failed to load data: ${response.statusCode}');
       }
     } catch (e) {
@@ -79,6 +107,105 @@ class _SearchPageState extends State<SearchPage> {
     }
   }
 
+  void _playSong(String videoUrl, String songName, String imageurl) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$downloaderApiUrl?url=$videoUrl'),
+        headers: {
+          'X-RapidAPI-Key':
+              '049340387emsh1ef19f738c7e73bp152296jsnfe5238b04e6d',
+          'X-RapidAPI-Host': 'youtube-mp3-downloader2.p.rapidapi.com',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final audioUrl = data['dlink'] as String?;
+
+        if (audioUrl != null && audioUrl.isNotEmpty) {
+          Provider.of<MusicPlayerModel>(context, listen: false)
+              .play(songName, audioUrl, imageurl);
+          setState(() {});
+        } else {
+          throw Exception('Failed to load audio: audioUrl is empty');
+        }
+      } else {
+        throw Exception('Failed to load audio: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error: $e');
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text('Error'),
+            content: Text('Failed to load audio: $e'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
+    }
+  }
+
+  void _downloadSong(String videoUrl, String title, String artist, String imageUrl) async {
+  try {
+final response = await http.get(
+        Uri.parse('$downloaderApiUrl?url=$videoUrl'),
+        headers: {
+          'X-RapidAPI-Key':
+              '049340387emsh1ef19f738c7e73bp152296jsnfe5238b04e6d',
+          'X-RapidAPI-Host': 'youtube-mp3-downloader2.p.rapidapi.com',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final audioUrl = data['dlink'];
+
+
+    if (audioUrl != null && audioUrl.isNotEmpty) {
+      }
+
+      await saveDownloadedSong(title, artist, imageUrl, audioUrl);
+
+      _showNotification('Download Started', 'Your download has started.');
+    } else {
+      throw Exception('Failed to download audio: audioUrl is empty');
+    }
+  } catch (e) {
+    // Error handling code...
+  }
+}
+
+
+  Future<void> _showNotification(String title, String body) async {
+    const AndroidNotificationDetails androidPlatformChannelSpecifics =
+        AndroidNotificationDetails(
+      'your channel id',
+      'Harmony',
+      channelDescription: 'My Music Player',
+      importance: Importance.max,
+      priority: Priority.high,
+      showWhen: false,
+    );
+    const NotificationDetails platformChannelSpecifics =
+        NotificationDetails(android: androidPlatformChannelSpecifics);
+    await flutterLocalNotificationsPlugin.show(
+      0,
+      title,
+      body,
+      platformChannelSpecifics,
+      payload: 'item x',
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -91,14 +218,14 @@ class _SearchPageState extends State<SearchPage> {
       child: Scaffold(
         backgroundColor: Colors.transparent,
         appBar: AppBar(
-           title: Text(
-                "Search for a Song",
-                style: GoogleFonts.acme(
-                  color: Colors.white,
-                  fontSize: 24.0,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+          title: Text(
+            "Search for a Song",
+            style: GoogleFonts.acme(
+              color: Colors.white,
+              fontSize: 24.0,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
           backgroundColor: const Color(0xF58C08A9),
           elevation: 0.0,
         ),
@@ -137,35 +264,48 @@ class _SearchPageState extends State<SearchPage> {
                 child: ListView.builder(
                   itemCount: displayList.length,
                   itemBuilder: (BuildContext context, int index) {
-                    final song = displayList[index];
                     return Container(
                       width: double.minPositive,
-                      margin: const EdgeInsets.all(8),
-                      padding: const EdgeInsets.all(10),
+                      margin: const EdgeInsets.all(5),
+                      padding: const EdgeInsets.all(5),
                       decoration: BoxDecoration(
                         color: const Color.fromARGB(255, 205, 96, 238)
                             .withOpacity(0.3),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: ListTile(
-                        leading: song.imageurl.isNotEmpty
-                        ? Image.network(
-                            song.imageurl,
-                            width: 50,
-                            height: 50,
-                            fit: BoxFit.cover,
-                            errorBuilder: (BuildContext context, Object exception, StackTrace? stackTrace) {
-                              return Icon(Icons.music_note);
-                            },
-                          )
-                        : Icon(Icons.music_note),
-                        title: Text(
-                          song.title, // Assuming AlbumSongs has a 'title' field
-                          style: TextStyle(color: Colors.black),
-                        ),
-                        subtitle: Text(song.name),
+                        leading: displayList[index].imageurl.isNotEmpty
+                            ? Image.network(
+                                displayList[index].imageurl,
+                                width: 50,
+                                height: 50,
+                                fit: BoxFit.cover,
+                                errorBuilder: (BuildContext context,
+                                    Object exception, StackTrace? stackTrace) {
+                                  return Icon(Icons.music_note);
+                                },
+                              )
+                            : const Icon(Icons.music_note),
+                        title: Text(displayList[index].title,
+                            style: TextStyle(color: Colors.black)),
+                        subtitle: Text(displayList[index].artist),
                         trailing: IconButton(
-                            onPressed: () {}, icon: Icon(Icons.play_arrow)),
+                          onPressed: () {
+                            _downloadSong(displayList[index].url,  displayList[index].title,displayList[index].artist,
+                                displayList[index].imageurl, );
+                          },
+                          icon: Icon(Icons.download),
+                        ),
+                        onTap: () async {
+                          try {
+                            _playSong(
+                                displayList[index].url,
+                                displayList[index].title,
+                                displayList[index].imageurl);
+                          } catch (e) {
+                            print('Error playing song: $e');
+                          }
+                        },
                       ),
                     );
                   },

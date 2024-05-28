@@ -1,19 +1,15 @@
-// ignore_for_file: file_names, unnecessary_import, non_constant_identifier_names, avoid_print
-
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:just_audio/just_audio.dart';
-import 'package:just_audio_background/just_audio_background.dart';
-import 'package:musicplayer/provider/SongModelProvider.dart';
-import 'package:on_audio_query/on_audio_query.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:musicplayer/model/music_player_model.dart';
 import 'package:provider/provider.dart';
+import 'package:on_audio_query/on_audio_query.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class PlayScreen extends StatefulWidget {
   const PlayScreen(
-      {super.key, required this.songModel, required this.audioplayer});
+      {super.key, required this.songModel, required this.playnextsong});
   final SongModel songModel;
-  final AudioPlayer audioplayer;
+  final Function playnextsong;
 
   @override
   State<PlayScreen> createState() => _PlayScreenState();
@@ -24,58 +20,41 @@ class _PlayScreenState extends State<PlayScreen> {
   Duration duration = const Duration();
   Duration playing = const Duration();
 
+  late InterstitialAd interAds;
+  bool isAdLoaded = false;
+
+  adloaded() async {
+    InterstitialAd.load(
+        adUnitId: 'ca-app-pub-3940256099942544/1033173712',
+        request: AdRequest(),
+        adLoadCallback: InterstitialAdLoadCallback(onAdLoaded: (ad) {
+          setState(() {
+            interAds = ad;
+            isAdLoaded = true;
+          });
+        }, onAdFailedToLoad: (error) {
+          interAds.dispose();
+          isAdLoaded = false;
+        }));
+  }
+
   @override
   void initState() {
     super.initState();
-    PlaySongs();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      playSong();
+    });
+    adloaded();
   }
 
-  void PlaySongs() async {
-    try {
-      Uri? artUri;
-      String artUriString = widget.songModel.id.toString();
-      if (Uri.tryParse(artUriString)?.hasAbsolutePath ?? false) {
-        artUri = Uri.parse(artUriString);
-      } else {
-        print("Invalid artUri: $artUriString");
-      }
-
-      await widget.audioplayer.setAudioSource(AudioSource.uri(
-        Uri.parse(widget.songModel.uri!),
-        tag: MediaItem(
-          id: '${widget.songModel.id}',
-          album: "${widget.songModel.album}",
-          title: widget.songModel.displayNameWOExt,
-          artUri: artUri,
-        ),
-      ));
-      widget.audioplayer.play();
-      setState(() {
-        isplaying = true;
-      });
-    } catch (e) {
-      print("Error playing songs: $e");
-    }
-
-    widget.audioplayer.durationStream.listen((dur) {
-      if (dur != null && mounted) {
-        setState(() {
-          duration = dur;
-        });
-      }
-    });
-
-    widget.audioplayer.positionStream.listen((play) {
-      if (mounted) {
-        setState(() {
-          playing = play;
-        });
-      }
-    });
+  void playSong() async {
+    final player = Provider.of<MusicPlayerModel>(context, listen: false);
+    player.play(widget.songModel.displayNameWOExt, widget.songModel.uri!, '');
   }
 
   @override
   Widget build(BuildContext context) {
+    final player = Provider.of<MusicPlayerModel>(context);
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -91,8 +70,14 @@ class _PlayScreenState extends State<PlayScreen> {
               backgroundColor: const Color(0xF58C08A9),
               automaticallyImplyLeading: false,
               leading: IconButton(
-                icon: const Icon(Icons.arrow_back),
+                icon: const Icon(
+                  Icons.arrow_back,
+                  color: Colors.white,
+                ),
                 onPressed: () {
+                  if (isAdLoaded == true) {
+                    interAds.show();
+                  }
                   Navigator.pop(context);
                 },
               ),
@@ -110,22 +95,6 @@ class _PlayScreenState extends State<PlayScreen> {
                   ),
                 ),
               ),
-              actions: [
-                Align(
-                  alignment: const AlignmentDirectional(0, 0),
-                  child: IconButton(
-                    hoverColor: const Color.fromARGB(255, 73, 1, 70),
-                    icon: const Icon(
-                      Icons.search,
-                      color: Colors.white,
-                      size: 35,
-                    ),
-                    onPressed: () {
-                      print('Search IconButton pressed ...');
-                    },
-                  ),
-                ),
-              ],
               bottom: PreferredSize(
                 preferredSize: const Size.fromHeight(10),
                 child: Container(),
@@ -135,130 +104,96 @@ class _PlayScreenState extends State<PlayScreen> {
             ),
             SliverToBoxAdapter(
               child: Align(
-                child: Center(
-                  child: QueryArtworkWidget(
-                      id: widget.songModel.id,
-                      type: ArtworkType.AUDIO,
-                      artworkHeight: 300,
-                      artworkWidth: 300),
-                ),
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: Align(
-                child: Text(
-                  widget.songModel.displayNameWOExt,
-                  overflow: TextOverflow.fade,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold, fontSize: 30.0),
-                ),
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: Align(
-                child: Text(
-                  widget.songModel.artist.toString(),
-                  maxLines: 1,
-                  overflow: TextOverflow.fade,
-                  style: const TextStyle(fontSize: 20.0),
-                ),
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: Align(
-                child: Row(
+                child: Column(
                   children: [
-                    Text(playing.toString().split('.')[0]),
-                    Expanded(
-                        child: Slider(
-                            min: const Duration(microseconds: 0)
-                                .inSeconds
-                                .toDouble(),
-                            value: playing.inSeconds.toDouble(),
-                            max: duration.inSeconds.toDouble(),
-                            onChanged: (value) {
-                              setState(() {
-                                sliderChanges(value.toInt());
-                                value = value;
-                              });
-                            })),
-                    Text(duration.toString().split('.')[0]),
-                  ],
-                ),
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: Align(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    IconButton(
-                        onPressed: () {
-                          if (widget.audioplayer.hasPrevious) {
-                            widget.audioplayer.seekToPrevious();
-                          }
-                        },
-                        icon: const Icon(
-                          Icons.skip_previous,
-                          size: 30.0,
-                        )),
-                    const SizedBox(
-                      height: 22.0,
+                    SizedBox(
+                      height: 15,
                     ),
-                    IconButton(
-                      onPressed: () {
-                        setState(() {
-                          if (isplaying) {
-                            widget.audioplayer.pause();
-                          } else {
-                            widget.audioplayer.play();
-                          }
-                          isplaying = !isplaying;
-                        });
-                      },
-                      icon: Icon(isplaying ? Icons.pause : Icons.play_arrow),
+                    Center(
+                      child: QueryArtworkWidget(
+                          id: widget.songModel.id,
+                          type: ArtworkType.AUDIO,
+                          artworkHeight: 300,
+                          artworkWidth: 300),
                     ),
-                    const SizedBox(
-                      height: 22.0,
+                    SizedBox(
+                      height: 10,
                     ),
-                    IconButton(
-                        onPressed: () {
-                          if (widget.audioplayer.hasPrevious) {
-                            widget.audioplayer.seekToPrevious();
-                          }
-                        },
-                        icon: const Icon(Icons.skip_next, size: 30.0))
+                    Text(
+                      widget.songModel.displayNameWOExt,
+                      overflow: TextOverflow.fade,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 30.0),
+                    ),
+                    SizedBox(
+                      height: 10,
+                    ),
+                    Text(
+                      widget.songModel.artist.toString(),
+                      maxLines: 1,
+                      overflow: TextOverflow.fade,
+                      style: const TextStyle(fontSize: 20.0),
+                    ),
+                    SizedBox(
+                      height: 10,
+                    ),
+                    Row(
+                      children: [
+                        Text(player.playing.toString().split('.')[0]),
+                        Expanded(
+                            child: Slider(
+                                min: const Duration(microseconds: 0)
+                                    .inSeconds
+                                    .toDouble(),
+                                value: player.playing.inSeconds.toDouble(),
+                                max: player.duration.inSeconds.toDouble(),
+                                onChanged: (value) {
+                                  player.sliderChanges(value.toInt());
+                                })),
+                        Text(player.duration.toString().split('.')[0]),
+                      ],
+                    ),
+                    SizedBox(
+                      height: 10,
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        IconButton(
+                            onPressed: () {
+                              // Implement previous song logic here
+                            },
+                            icon: const Icon(
+                              Icons.skip_previous,
+                              size: 30.0,
+                            )),
+                        const SizedBox(
+                          height: 22.0,
+                        ),
+                        IconButton(
+                          onPressed: () {
+                            player.playPause();
+                          },
+                          icon: Icon(player.isPlaying
+                              ? Icons.pause
+                              : Icons.play_arrow),
+                        ),
+                        const SizedBox(
+                          height: 22.0,
+                        ),
+                        IconButton(
+                            onPressed: () {
+                              widget.playnextsong();
+                            },
+                            icon: const Icon(Icons.skip_next, size: 30.0))
+                      ],
+                    ),
                   ],
                 ),
               ),
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  void sliderChanges(int seconds) {
-    Duration duration = Duration(seconds: seconds);
-    widget.audioplayer.seek(duration);
-  }
-}
-
-class ArtWorkWidget extends StatelessWidget {
-  const ArtWorkWidget({
-    super.key,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return QueryArtworkWidget(
-      id: context.watch<SongModelProvider>().id,
-      type: ArtworkType.AUDIO,
-      artworkHeight: 300,
-      artworkWidth: 300,
-      nullArtworkWidget: Icon(
-        Icons.music_note,
-        size: 100,
       ),
     );
   }

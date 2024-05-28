@@ -24,8 +24,9 @@ class _SplashScreenState extends State<SplashScreen> {
   Widget build(BuildContext context) {
     return  Scaffold(
       body: Container(
+        margin: EdgeInsets.only(top: 30),
         decoration: const BoxDecoration(
-          gradient: LinearGradient(colors: [Color.fromARGB(255, 221, 133, 243), Color.fromARGB(255, 129, 10, 150)],
+          gradient: LinearGradient(colors: [Color.fromARGB(255, 221, 133, 243), Color.fromARGB(255, 109, 5, 128)],
           begin: Alignment.topRight,
           end: Alignment.bottomLeft,)
         ),
@@ -35,29 +36,29 @@ class _SplashScreenState extends State<SplashScreen> {
           child: Column(
            children: [
             SizedBox(
-               height: 200,
-                width: 200,
+               height: 250,
+                width: 250,
               child: Lottie.asset("lib/assest/splashScreenAnimation.json"),
             ),
             Text("Welcome",style: GoogleFonts.acme(
               color: Colors.white,
-              fontSize: 18.0,
+              fontSize: 20.0,
               fontWeight: FontWeight.bold,
             ),),
             Text("to",style: GoogleFonts.acme(
               color: Colors.white,
-              fontSize: 18.0,
+              fontSize: 20.0,
               fontWeight: FontWeight.bold,
             ),),
             Text("Harmony",style: GoogleFonts.acme(
               color: Colors.white,
-              fontSize: 28.0,
+              fontSize: 30.0,
               fontWeight: FontWeight.bold,
             ),
             ),
             Text("Let the party Begin's",style: GoogleFonts.acme(
               color: Colors.white,
-              fontSize: 14.0,
+              fontSize: 17.0,
               fontWeight: FontWeight.bold,
             ),),
           ],

@@ -8,10 +8,9 @@ class MiniPlayer extends StatelessWidget {
     var musicPlayerModel = Provider.of<MusicPlayerModel>(context);
 
     return Container(
-      // padding: EdgeInsets.all(5.0),
       margin: EdgeInsets.all(15),
       decoration: BoxDecoration(
-        color: Colors.black54.withOpacity(0.3),
+        color: Colors.black54.withOpacity(0.2),
         borderRadius: BorderRadius.circular(10.0),
       ),
       child: Column(
@@ -37,8 +36,9 @@ class MiniPlayer extends StatelessWidget {
             ],
           ),
           Row(
+            mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(musicPlayerModel.playing.toString().split('.')[0]),
+                Text(musicPlayerModel.playing.toString().split('.')[0],style: TextStyle(color: Colors.white),),
                 Slider(
                     min: const Duration(microseconds: 0).inSeconds.toDouble(),
                     value: musicPlayerModel.playing.inSeconds.toDouble(),
@@ -47,7 +47,7 @@ class MiniPlayer extends StatelessWidget {
                       musicPlayerModel.sliderChanges(value.toInt());
                       value = value;
                     }),
-                      Text(musicPlayerModel.duration.toString().split('.')[0]),
+                      Text(musicPlayerModel.duration.toString().split('.')[0],style: TextStyle(color: Colors.white),),
               ],
             ),
         ],

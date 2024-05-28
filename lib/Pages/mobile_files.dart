@@ -3,6 +3,7 @@
 // ignore_for_file: sized_box_for_whitespace, unnecessary_const
 
 import 'package:flutter/material.dart';
+import 'package:musicplayer/Pages/miniplayer.dart';
 import 'package:musicplayer/component/song_list.dart';
 import 'package:musicplayer/model/song_data_controller.dart';
 import 'package:get/get.dart';
@@ -140,6 +141,7 @@ class _LocalDeviceDataState extends State<LocalDeviceData> {
           });
         }),
       ),
+      bottomNavigationBar: MiniPlayer(),
     );
   }
 }

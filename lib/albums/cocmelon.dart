@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:musicplayer/Pages/home.dart';
 import 'package:musicplayer/Pages/miniplayer.dart';
 import 'package:musicplayer/component/FirebaseSongList.dart';
+import 'package:musicplayer/component/songSearch.dart';
 
 class CocmelonAlbum extends StatefulWidget {
   const CocmelonAlbum({super.key});
@@ -13,6 +14,9 @@ class CocmelonAlbum extends StatefulWidget {
 }
 
 class _CocmelonAlbumState extends State<CocmelonAlbum> {
+  List<DocumentSnapshot> _songs = [];
+  AsyncSnapshot<QuerySnapshot<Object?>>? _snapshot;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -69,6 +73,12 @@ class _CocmelonAlbumState extends State<CocmelonAlbum> {
                           size: 35,
                         ),
                         onPressed: () {
+                          if (_snapshot != null) {
+                            showSearch(
+                              context: context,
+                              delegate: SongSearchDelegate(_songs, _snapshot!),
+                            );
+                          }
                           print('Search IconButton pressed ...');
                         },
                       ),
@@ -143,6 +153,9 @@ class _CocmelonAlbumState extends State<CocmelonAlbum> {
                               child: Text('No songs found.'),
                             );
                           }
+                          _snapshot = snapshot;
+                          _songs = snapshot.data!.docs; 
+
                           return ListView.builder(
                             itemCount: snapshot.data!.docs.length,
                             shrinkWrap: true,
@@ -160,7 +173,7 @@ class _CocmelonAlbumState extends State<CocmelonAlbum> {
                                 url: url,
                                 index: index,
                                 snapshot: snapshot,
-                                imageurl:imageurl,
+                                imageurl: imageurl,
                               );
                             },
                           );
@@ -176,6 +189,6 @@ class _CocmelonAlbumState extends State<CocmelonAlbum> {
         ),
       ),
       bottomNavigationBar: MiniPlayer(),
-    );;
+    );
   }
 }
