@@ -177,6 +177,7 @@ class _BE_AlbumState extends State<BE_Album> {
                                 index: index,
                                 snapshot: snapshot,
                                 imageurl:imageurl,
+                                artist: artist,
                               );
                             },
                           );

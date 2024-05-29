@@ -55,6 +55,7 @@ class SongSearchDelegate extends SearchDelegate<String> {
           index: index,
           snapshot: _snapshot,
           imageurl: imageurl,
+          artist: artist,
         );
       },
     );
@@ -92,6 +93,7 @@ class SongSearchDelegate extends SearchDelegate<String> {
             index: index,
             snapshot: _snapshot,
             imageurl: imageurl,
+            artist: artist,
           );
         },
       ),

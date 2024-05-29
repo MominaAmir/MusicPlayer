@@ -10,6 +10,7 @@ class FirebaseSongList extends StatefulWidget {
   String? subtitle;
   String? url;
   String? imageurl;
+  String? artist;
   int index;
   AsyncSnapshot<QuerySnapshot<Object?>> snapshot;
 
@@ -21,6 +22,7 @@ class FirebaseSongList extends StatefulWidget {
     required this.imageurl,
     required this.index,
     required this.snapshot,
+    required this.artist,
   });
 
   @override
@@ -64,7 +66,7 @@ class _FirebaseSongListState extends State<FirebaseSongList> {
           ? null 
           : () {
               Provider.of<MusicPlayerModel>(context, listen: false)
-                  .downloadSong(widget.url!, widget.songName!, context, widget.imageurl!)
+                  .downloadSong(widget.url!, widget.songName!, context, widget.imageurl!, widget.artist!)
                   .then((_) {
                 // Show Snackbar when download is completed
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -93,7 +95,7 @@ class _FirebaseSongListState extends State<FirebaseSongList> {
         // ),
         onTap: () async {
           try {
-            Provider.of<MusicPlayerModel>(context, listen: false).play(widget.songName!, widget.url!, widget.imageurl!);
+            Provider.of<MusicPlayerModel>(context, listen: false).play(widget.songName!, widget.url!, widget.imageurl!, widget.artist!);
             setState(() {});
           } catch (e) {
             print('Error playing song: $e');

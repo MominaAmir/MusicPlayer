@@ -131,24 +131,6 @@ class _SongListState extends State<SongList> {
     });
   }
 
-   void _playNextSong() {
-    final nextIndex = widget.index + 1;
-    if (nextIndex < widget.controller.localsonglist.length) {
-      final nextSong = widget.controller.localsonglist[nextIndex];
-      Provider.of<MusicPlayerModel>(context, listen: false)
-          .play(nextSong.title, nextSong.uri!, artwork as String);
-      // Update the currently playing song in the UI if needed
-      print("start the next song playlist");
-      setState(() {
-        widget.songModel = nextSong;
-        widget.songName = nextSong.title;
-        widget.subtitle = nextSong.artist;
-        widget.index = nextIndex;
-      });
-    } else {
-      print("Reached end of the playlist");
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -187,7 +169,8 @@ class _SongListState extends State<SongList> {
             MaterialPageRoute(
               builder: (context) => PlayScreen(
                 songModel: widget.songModel!,
-                playnextsong: _playNextSong,
+                controller: widget.controller,
+                index: widget.index,
               ),
             ),
           );

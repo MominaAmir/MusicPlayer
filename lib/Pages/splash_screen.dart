@@ -24,7 +24,6 @@ class _SplashScreenState extends State<SplashScreen> {
   Widget build(BuildContext context) {
     return  Scaffold(
       body: Container(
-        margin: EdgeInsets.only(top: 30),
         decoration: const BoxDecoration(
           gradient: LinearGradient(colors: [Color.fromARGB(255, 221, 133, 243), Color.fromARGB(255, 109, 5, 128)],
           begin: Alignment.topRight,
@@ -35,6 +34,9 @@ class _SplashScreenState extends State<SplashScreen> {
           padding: const EdgeInsets.fromLTRB(0, 80, 0, 0),
           child: Column(
            children: [
+            SizedBox(
+              height:10 ,
+            ),
             SizedBox(
                height: 250,
                 width: 250,

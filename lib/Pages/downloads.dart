@@ -1,6 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:musicplayer/Pages/miniplayer.dart';
+import 'package:musicplayer/component/songSearch.dart';
 import 'package:provider/provider.dart';
 import 'package:musicplayer/model/music_player_model.dart';
 
@@ -56,6 +58,9 @@ class _DownloadPageState extends State<DownloadPage> {
     });
   }
 
+  List<DocumentSnapshot> _songs = [];
+  AsyncSnapshot<QuerySnapshot<Object?>>? _snapshot;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -107,6 +112,12 @@ class _DownloadPageState extends State<DownloadPage> {
                       size: 35,
                     ),
                     onPressed: () {
+                      if (_snapshot != null) {
+                        showSearch(
+                          context: context,
+                          delegate: SongSearchDelegate(_songs, _snapshot!),
+                        );
+                      }
                       print('Search IconButton pressed ...');
                     },
                   ),
@@ -132,6 +143,9 @@ class _DownloadPageState extends State<DownloadPage> {
                   } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
                     return Center(child: Text('No downloaded songs'));
                   } else {
+                    _snapshot =
+                        snapshot as AsyncSnapshot<QuerySnapshot<Object?>>?;
+                    _songs = snapshot.data!.cast<DocumentSnapshot<Object?>>();
                     downloadedSongs = snapshot.data!;
                     return ListView.builder(
                       itemCount: downloadedSongs.length,
@@ -143,7 +157,8 @@ class _DownloadPageState extends State<DownloadPage> {
                                   song['imageurl']!,
                                   fit: BoxFit.cover,
                                   errorBuilder: (context, error, stackTrace) {
-                                    return const Icon(Icons.music_note, size: 20);
+                                    return const Icon(Icons.music_note,
+                                        size: 20);
                                   },
                                 )
                               : const Icon(Icons.music_note, size: 20),
@@ -158,12 +173,10 @@ class _DownloadPageState extends State<DownloadPage> {
                           ),
                           onTap: () async {
                             try {
-                              Provider.of<MusicPlayerModel>(context, listen: false)
-                                  .play(
-                                song['artist']!,
-                                song['url']!,
-                                song['imageurl']!,
-                              );
+                              Provider.of<MusicPlayerModel>(context,
+                                      listen: false)
+                                  .play(song['artist']!, song['url']!,
+                                      song['imageurl']!, song['artist']!);
                               setState(() {});
                             } catch (e) {
                               print('Error playing song: $e');

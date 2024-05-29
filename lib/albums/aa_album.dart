@@ -180,6 +180,7 @@ class _AA_AlbumState extends State<AA_Album> {
                                 index: index,
                                 snapshot: snapshot,
                                 imageurl:imageurl,
+                                artist: artist,
                               );
                             },
                           );

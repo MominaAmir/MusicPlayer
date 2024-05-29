@@ -18,14 +18,16 @@ Future<void> main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+    await JustAudioBackground.init(
+    androidNotificationChannelId: 'com.example.myapp.channel.audio',
+    androidNotificationChannelName: 'Audio playback',
+    androidNotificationOngoing: true,
+    notificationColor: Colors.black,
+  );
   await MobileAds.instance.initialize;
   // RequestConfiguration requestConfiguration = RequestConfiguration(testDeviceIds: devices);
   // MobileAds.instance.updateRequestConfiguration(requestConfiguration);
-//  await JustAudioBackground.init(
-//     androidNotificationChannelId: 'com.ryanheise.bg_demo.channel.audio',
-//     androidNotificationChannelName: 'Audio playback',
-//     androidNotificationOngoing: true,
-// );
+
   try {
     await FlutterDownloader.initialize(
       debug: true,

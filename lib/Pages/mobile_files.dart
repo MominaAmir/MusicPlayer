@@ -2,8 +2,10 @@
 // ignore_for_file: invalid_use_of_protected_member, non_constant_identifier_names, avoid_print, unnecessary_new,
 // ignore_for_file: sized_box_for_whitespace, unnecessary_const
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:musicplayer/Pages/miniplayer.dart';
+import 'package:musicplayer/component/songSearch.dart';
 import 'package:musicplayer/component/song_list.dart';
 import 'package:musicplayer/model/song_data_controller.dart';
 import 'package:get/get.dart';
@@ -19,6 +21,8 @@ class LocalDeviceData extends StatefulWidget {
 }
 
 class _LocalDeviceDataState extends State<LocalDeviceData> {
+  List<DocumentSnapshot> _songs = [];
+  AsyncSnapshot<QuerySnapshot<Object?>>? _snapshot;
   late SongDataController controller;
 
   @override
@@ -51,57 +55,64 @@ class _LocalDeviceDataState extends State<LocalDeviceData> {
                 slivers: [
                   SliverAppBar(
                     pinned: true,
-                floating: false,
-                backgroundColor: const Color(0xF58C08A9),
-                automaticallyImplyLeading: false,
-                leading: IconButton(
-                  icon: const Icon(
-                    Icons.arrow_back,
-                    color: Colors.white,
-                  ),
-                  onPressed: () {
-                    Navigator.pop(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) =>  HomePageContainer()));
-                  },
-                ),
-                title: Align(
-                  alignment: const AlignmentDirectional(0, -1),
-                  child: SelectionArea(
-                    child: Text(
-                      'Device Files',
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.acme(
-                        color: Colors.white,
-                        fontSize: 24.0,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-                actions: [
-                  Align(
-                    alignment: const AlignmentDirectional(0, 0),
-                    child: IconButton(
-                      hoverColor: const Color.fromARGB(255, 73, 1, 70),
+                    floating: false,
+                    backgroundColor: const Color(0xF58C08A9),
+                    automaticallyImplyLeading: false,
+                    leading: IconButton(
                       icon: const Icon(
-                        Icons.search,
+                        Icons.arrow_back,
                         color: Colors.white,
-                        size: 35,
                       ),
                       onPressed: () {
-                        print('Search IconButton pressed ...');
+                        Navigator.pop(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => HomePageContainer()));
                       },
                     ),
-                  ),
-                ],
-                bottom: PreferredSize(
-                  preferredSize: const Size.fromHeight(7),
-                  child: Container(),
-                ),
-                centerTitle: true,
-                elevation: 10,
+                    title: Align(
+                      alignment: const AlignmentDirectional(0, -1),
+                      child: SelectionArea(
+                        child: Text(
+                          'Device Files',
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.acme(
+                            color: Colors.white,
+                            fontSize: 24.0,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                    actions: [
+                      Align(
+                        alignment: const AlignmentDirectional(0, 0),
+                        child: IconButton(
+                          hoverColor: const Color.fromARGB(255, 73, 1, 70),
+                          icon: const Icon(
+                            Icons.search,
+                            color: Colors.white,
+                            size: 35,
+                          ),
+                          onPressed: () {
+                            if (_snapshot != null) {
+                              showSearch(
+                                context: context,
+                                delegate:
+                                    SongSearchDelegate(_songs, _snapshot!),
+                              );
+                            }
+                            print('Search IconButton pressed ...');
+                          },
+                        ),
+                      ),
+                    ],
+                    bottom: PreferredSize(
+                      preferredSize: const Size.fromHeight(7),
+                      child: Container(),
+                    ),
+                    centerTitle: true,
+                    elevation: 10,
                   ),
                   SliverList(
                     delegate: SliverChildBuilderDelegate(
@@ -119,6 +130,10 @@ class _LocalDeviceDataState extends State<LocalDeviceData> {
                                 child: Text("Error loading songs"),
                               );
                             } else {
+                              _snapshot = snapshot
+                                  as AsyncSnapshot<QuerySnapshot<Object?>>?;
+                              _songs = snapshot.data!
+                                  as List<DocumentSnapshot<Object?>>;
                               final song = snapshot.data as SongModel;
                               return SongList(
                                 songName: song.title,

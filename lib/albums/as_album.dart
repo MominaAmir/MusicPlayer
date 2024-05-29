@@ -177,6 +177,7 @@ class _AS_AlbumState extends State<AS_Album> {
                                 index: index,
                                 snapshot: snapshot,
                                 imageurl:imageurl,
+                                artist: artist,
                               );
                             },
                           );

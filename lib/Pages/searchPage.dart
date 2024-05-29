@@ -1,3 +1,4 @@
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:musicplayer/model/albumModel.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
@@ -25,6 +26,30 @@ class _SearchPageState extends State<SearchPage> {
 
   List<AlbumSongs> _searchResults = [];
   List<AlbumSongs> displayList = [];
+  late BannerAd bannerads;
+
+  bool isAdLoaded = false;
+  var adUnit = "ca-app-pub-3940256099942544/9214589741";
+
+  initBannerAd() {
+    bannerads = BannerAd(
+      size: AdSize.banner,
+      adUnitId: adUnit,
+      listener: BannerAdListener(
+        onAdLoaded: (ad) {
+          setState(() {
+            isAdLoaded = true;
+          });
+        },
+        onAdFailedToLoad: (ad, error) {
+          ad.dispose();
+          print(error);
+        },
+      ),
+      request: const AdRequest(),
+    );
+    bannerads.load();
+  }
 
   @override
   void initState() {
@@ -32,8 +57,7 @@ class _SearchPageState extends State<SearchPage> {
     _searchController = TextEditingController();
     _searchResults = [];
     displayList = List.from(_searchResults);
-
-    // Initialize notifications
+    initBannerAd();
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('@mipmap/ic_launcher');
     final InitializationSettings initializationSettings =
@@ -47,15 +71,15 @@ class _SearchPageState extends State<SearchPage> {
     super.dispose();
   }
 
+  Future<void> saveDownloadedSong(
+      String title, String artist, String imageUrl, String audioUrl) async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    List<String>? downloadedSongs =
+        prefs.getStringList('downloaded_songs') ?? [];
 
-Future<void> saveDownloadedSong(String title, String artist, String imageUrl, String audioUrl) async {
-  final SharedPreferences prefs = await SharedPreferences.getInstance();
-  List<String>? downloadedSongs = prefs.getStringList('downloaded_songs') ?? [];
-
-  downloadedSongs.add('$title,$artist,$imageUrl,$audioUrl');
-  await prefs.setStringList('downloaded_songs', downloadedSongs);
-}
-
+    downloadedSongs.add('$title,$artist,$imageUrl,$audioUrl');
+    await prefs.setStringList('downloaded_songs', downloadedSongs);
+  }
 
   void _searchSongs(String query) async {
     try {
@@ -107,7 +131,7 @@ Future<void> saveDownloadedSong(String title, String artist, String imageUrl, St
     }
   }
 
-  void _playSong(String videoUrl, String songName, String imageurl) async {
+  void _playSong(String videoUrl, String songName, String imageurl , String artist) async {
     try {
       final response = await http.get(
         Uri.parse('$downloaderApiUrl?url=$videoUrl'),
@@ -124,7 +148,7 @@ Future<void> saveDownloadedSong(String title, String artist, String imageUrl, St
 
         if (audioUrl != null && audioUrl.isNotEmpty) {
           Provider.of<MusicPlayerModel>(context, listen: false)
-              .play(songName, audioUrl, imageurl);
+              .play(songName, audioUrl, imageurl, artist);
           setState(() {});
         } else {
           throw Exception('Failed to load audio: audioUrl is empty');
@@ -154,9 +178,10 @@ Future<void> saveDownloadedSong(String title, String artist, String imageUrl, St
     }
   }
 
-  void _downloadSong(String videoUrl, String title, String artist, String imageUrl) async {
-  try {
-final response = await http.get(
+  void _downloadSong(
+      String videoUrl, String title, String artist, String imageUrl) async {
+    try {
+      final response = await http.get(
         Uri.parse('$downloaderApiUrl?url=$videoUrl'),
         headers: {
           'X-RapidAPI-Key':
@@ -169,21 +194,18 @@ final response = await http.get(
         final data = jsonDecode(response.body);
         final audioUrl = data['dlink'];
 
+        if (audioUrl != null && audioUrl.isNotEmpty) {}
 
-    if (audioUrl != null && audioUrl.isNotEmpty) {
+        await saveDownloadedSong(title, artist, imageUrl, audioUrl);
+
+        _showNotification('Download Started', 'Your download has started.');
+      } else {
+        throw Exception('Failed to download audio: audioUrl is empty');
       }
-
-      await saveDownloadedSong(title, artist, imageUrl, audioUrl);
-
-      _showNotification('Download Started', 'Your download has started.');
-    } else {
-      throw Exception('Failed to download audio: audioUrl is empty');
+    } catch (e) {
+      // Error handling code...
     }
-  } catch (e) {
-    // Error handling code...
   }
-}
-
 
   Future<void> _showNotification(String title, String body) async {
     const AndroidNotificationDetails androidPlatformChannelSpecifics =
@@ -230,7 +252,7 @@ final response = await http.get(
           elevation: 0.0,
         ),
         body: Padding(
-          padding: EdgeInsets.all(16),
+          padding: EdgeInsets.fromLTRB(16,16,16,16),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -291,8 +313,12 @@ final response = await http.get(
                         subtitle: Text(displayList[index].artist),
                         trailing: IconButton(
                           onPressed: () {
-                            _downloadSong(displayList[index].url,  displayList[index].title,displayList[index].artist,
-                                displayList[index].imageurl, );
+                            _downloadSong(
+                              displayList[index].url,
+                              displayList[index].title,
+                              displayList[index].artist,
+                              displayList[index].imageurl,
+                            );
                           },
                           icon: Icon(Icons.download),
                         ),
@@ -301,7 +327,8 @@ final response = await http.get(
                             _playSong(
                                 displayList[index].url,
                                 displayList[index].title,
-                                displayList[index].imageurl);
+                                displayList[index].imageurl,
+                              displayList[index].artist,);
                           } catch (e) {
                             print('Error playing song: $e');
                           }

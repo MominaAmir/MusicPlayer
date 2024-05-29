@@ -174,6 +174,7 @@ class _CocmelonAlbumState extends State<CocmelonAlbum> {
                                 index: index,
                                 snapshot: snapshot,
                                 imageurl: imageurl,
+                                artist: artist,
                               );
                             },
                           );

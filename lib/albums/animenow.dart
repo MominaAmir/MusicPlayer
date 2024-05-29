@@ -180,6 +180,7 @@ class _Anime_AlbumState extends State<Anime_Album> {
                                 index: index,
                                 snapshot: snapshot,
                                 imageurl:imageurl,
+                                artist: artist,
                               );
                             },
                           );

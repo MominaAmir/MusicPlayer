@@ -177,6 +177,7 @@ class _BTS_AlbumState extends State<BTS_Album> {
                                 index: index,
                                 snapshot: snapshot,
                                 imageurl:imageurl,
+                                artist: artist,
                               );
                             },
                           );

@@ -178,6 +178,7 @@ class _DD_AlbumState extends State<DD_Album> {
                                 index: index,
                                 snapshot: snapshot,
                                 imageurl:imageurl,
+                                artist: artist,
                               );
                             },
                           );

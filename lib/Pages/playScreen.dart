@@ -7,23 +7,41 @@ import 'package:google_fonts/google_fonts.dart';
 
 class PlayScreen extends StatefulWidget {
   const PlayScreen(
-      {super.key, required this.songModel, required this.playnextsong});
+      {super.key,
+      required this.songModel,
+      required this.index,
+      required this.controller});
   final SongModel songModel;
-  final Function playnextsong;
+  final int index;
+  final dynamic
+      controller; // Assuming the type of the controller, replace 'dynamic' with actual type if known
 
   @override
   State<PlayScreen> createState() => _PlayScreenState();
 }
 
 class _PlayScreenState extends State<PlayScreen> {
-  bool isplaying = false;
+  late SongModel songModel;
+  late int index;
+  bool isPlaying = false;
   Duration duration = const Duration();
   Duration playing = const Duration();
 
   late InterstitialAd interAds;
   bool isAdLoaded = false;
 
-  adloaded() async {
+  @override
+  void initState() {
+    super.initState();
+    songModel = widget.songModel;
+    index = widget.index;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      playSong();
+    });
+    adLoaded();
+  }
+
+  void adLoaded() async {
     InterstitialAd.load(
         adUnitId: 'ca-app-pub-3940256099942544/1033173712',
         request: AdRequest(),
@@ -33,23 +51,47 @@ class _PlayScreenState extends State<PlayScreen> {
             isAdLoaded = true;
           });
         }, onAdFailedToLoad: (error) {
-          interAds.dispose();
           isAdLoaded = false;
         }));
   }
 
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      playSong();
-    });
-    adloaded();
-  }
-
   void playSong() async {
     final player = Provider.of<MusicPlayerModel>(context, listen: false);
-    player.play(widget.songModel.displayNameWOExt, widget.songModel.uri!, '');
+    player.play(
+        songModel.displayNameWOExt, songModel.uri!, '', songModel.artist!);
+  }
+
+  void _playNextSong() {
+    final nextIndex = index + 1;
+    if (nextIndex < widget.controller.localsonglist.length) {
+      final nextSong = widget.controller.localsonglist[nextIndex];
+      Provider.of<MusicPlayerModel>(context, listen: false)
+          .play(nextSong.title, nextSong.uri!, '', nextSong.artist!);
+      // Update the currently playing song in the UI
+      setState(() {
+        songModel = nextSong;
+        index = nextIndex;
+      });
+      print("Playing next song in playlist");
+    } else {
+      print("Reached end of the playlist");
+    }
+  }
+
+  void _playPreviousSong() {
+    final prevIndex = index - 1;
+    if (prevIndex >= 0) {
+      final prevSong = widget.controller.localsonglist[prevIndex];
+      Provider.of<MusicPlayerModel>(context, listen: false)
+          .play(prevSong.title, prevSong.uri!, '', prevSong.artist!);
+      setState(() {
+        songModel = prevSong;
+        index = prevIndex;
+      });
+      print("Playing next song in playlist");
+    } else {
+      print("Reached end of the playlist");
+    }
   }
 
   @override
@@ -106,37 +148,29 @@ class _PlayScreenState extends State<PlayScreen> {
               child: Align(
                 child: Column(
                   children: [
-                    SizedBox(
-                      height: 15,
-                    ),
+                    SizedBox(height: 15),
                     Center(
                       child: QueryArtworkWidget(
-                          id: widget.songModel.id,
+                          id: songModel.id,
                           type: ArtworkType.AUDIO,
                           artworkHeight: 300,
                           artworkWidth: 300),
                     ),
-                    SizedBox(
-                      height: 10,
-                    ),
+                    SizedBox(height: 10),
                     Text(
-                      widget.songModel.displayNameWOExt,
+                      songModel.displayNameWOExt,
                       overflow: TextOverflow.fade,
                       style: const TextStyle(
                           fontWeight: FontWeight.bold, fontSize: 30.0),
                     ),
-                    SizedBox(
-                      height: 10,
-                    ),
+                    SizedBox(height: 10),
                     Text(
-                      widget.songModel.artist.toString(),
+                      songModel.artist.toString(),
                       maxLines: 1,
                       overflow: TextOverflow.fade,
                       style: const TextStyle(fontSize: 20.0),
                     ),
-                    SizedBox(
-                      height: 10,
-                    ),
+                    SizedBox(height: 10),
                     Row(
                       children: [
                         Text(player.playing.toString().split('.')[0]),
@@ -153,23 +187,19 @@ class _PlayScreenState extends State<PlayScreen> {
                         Text(player.duration.toString().split('.')[0]),
                       ],
                     ),
-                    SizedBox(
-                      height: 10,
-                    ),
+                    SizedBox(height: 10),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         IconButton(
                             onPressed: () {
-                              // Implement previous song logic here
+                              _playPreviousSong();
                             },
                             icon: const Icon(
                               Icons.skip_previous,
                               size: 30.0,
                             )),
-                        const SizedBox(
-                          height: 22.0,
-                        ),
+                        const SizedBox(height: 22.0),
                         IconButton(
                           onPressed: () {
                             player.playPause();
@@ -178,13 +208,9 @@ class _PlayScreenState extends State<PlayScreen> {
                               ? Icons.pause
                               : Icons.play_arrow),
                         ),
-                        const SizedBox(
-                          height: 22.0,
-                        ),
+                        const SizedBox(height: 22.0),
                         IconButton(
-                            onPressed: () {
-                              widget.playnextsong();
-                            },
+                            onPressed: _playNextSong,
                             icon: const Icon(Icons.skip_next, size: 30.0))
                       ],
                     ),

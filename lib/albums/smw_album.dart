@@ -163,6 +163,7 @@ class _SMWAlbumState extends State<SMWAlbum> {
                                 index: index,
                                 snapshot: snapshot,
                                 imageurl:imageurl,
+                                artist: artist,
                               );
                             },
                           );

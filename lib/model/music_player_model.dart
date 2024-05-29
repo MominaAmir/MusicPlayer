@@ -51,7 +51,7 @@ class MusicPlayerModel extends ChangeNotifier {
     });
   }
 
-  Future<void> play(String songName, String urlOrUri, String imageurl) async {
+  Future<void> play(String songName, String urlOrUri, String imageurl, String artist) async {
     _songName = songName;
     _url = urlOrUri;
     _imageurl = imageurl;
@@ -60,30 +60,24 @@ class MusicPlayerModel extends ChangeNotifier {
       await _audioPlayer.pause();
     }
 
-    try {
-      if (Uri.tryParse(urlOrUri)?.isAbsolute ?? false) {
-        await _audioPlayer.setUrl(urlOrUri);
-      } else {
-        final file = File(urlOrUri);
-        if (await file.exists()) {
-          final mediaItem = MediaItem(
-            id: songName,
-            album: "Album",
-            title: songName,
-            artUri: Uri.tryParse(imageurl ?? ''),
-          );
+      try {
+      final mediaItem = MediaItem(
+        id: urlOrUri,
+        album: 'Unknown Album',
+        title: songName,
+        artist: artist ?? 'Unknown Artist',
+        artUri: Uri.parse(imageurl),
+      );
 
-          await _audioPlayer.setAudioSource(
-            AudioSource.file(
-              file.path,
-              tag: mediaItem,
-            ),
-          );
-        } else {
+      if (Uri.tryParse(urlOrUri)?.isAbsolute ?? false) {
+        await _audioPlayer.setAudioSource(AudioSource.uri(
+          Uri.parse(urlOrUri),
+          tag: mediaItem,
+        ));
+      } else {
           print("File not found: $urlOrUri");
           return; // Return early if the file does not exist
         }
-      }
 
       await _audioPlayer.play();
       notifyListeners();
@@ -109,7 +103,7 @@ class MusicPlayerModel extends ChangeNotifier {
   notifyListeners();
 }
 
-  Future<void> downloadSong(String url, String songName, BuildContext context, String imageurl) async {
+  Future<void> downloadSong(String url, String songName, BuildContext context, String imageurl, String artist) async {
     _isDownloading[songName] = true;
     _isDownloaded[songName] = false;
     notifyListeners();
@@ -120,7 +114,7 @@ class MusicPlayerModel extends ChangeNotifier {
       final ref = FirebaseStorage.instance.refFromURL(url);
       final file = File(filePath);
       await ref.writeToFile(file);
-      downloadedSongs.add({'name': songName, 'path': filePath, 'url': url , 'imageurl': imageurl});
+      downloadedSongs.add({'name': songName, 'path': filePath, 'url': url , 'imageurl': imageurl , 'artist' :artist});
 
       _isDownloading[songName] = false;
       _isDownloaded[songName] = true;

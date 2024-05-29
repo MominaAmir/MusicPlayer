@@ -3,6 +3,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 // ignore: unused_import
 import 'package:musicplayer/Pages/miniplayer.dart';
 import 'package:musicplayer/component/FirebaseSongList.dart';
@@ -18,6 +19,37 @@ class TopSongs extends StatefulWidget {
 class _TopSongsState extends State<TopSongs> {
   List<DocumentSnapshot> _songs = [];
   AsyncSnapshot<QuerySnapshot<Object?>>? _snapshot;
+
+   late BannerAd bannerads;
+
+  bool isAdLoaded = false;
+  var adUnit = "ca-app-pub-3940256099942544/9214589741";
+
+  initBannerAd() {
+    bannerads = BannerAd(
+      size: AdSize.banner,
+      adUnitId: adUnit,
+      listener: BannerAdListener(
+        onAdLoaded: (ad) {
+          setState(() {
+            isAdLoaded = true;
+          });
+        },
+        onAdFailedToLoad: (ad, error) {
+          ad.dispose();
+          print(error);
+        },
+      ),
+      request: const AdRequest(),
+    );
+    bannerads.load();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    initBannerAd();
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -77,6 +109,16 @@ class _TopSongsState extends State<TopSongs> {
               centerTitle: true,
               elevation: 10,
             ),
+            SliverToBoxAdapter(
+                child: Align(
+              child: isAdLoaded
+                  ? SizedBox(
+                      height: bannerads.size.height.toDouble(),
+                      width: bannerads.size.width.toDouble(),
+                      child: AdWidget(ad: bannerads),
+                    )
+                  : SizedBox(),
+            )),
             SliverList(
               delegate: SliverChildBuilderDelegate(
                 (context, index) {
@@ -123,6 +165,7 @@ class _TopSongsState extends State<TopSongs> {
                             index: index,
                             snapshot: snapshot,
                             imageurl: imageurl,
+                            artist: artist,
                           );
                         },
                       );

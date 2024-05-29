@@ -521,6 +521,7 @@ class _HomePageState extends State<HomePage> {
                             index: index,
                             snapshot: snapshot,
                             imageurl: imageurl,
+                            artist: artist,
                           );
                         },
                       );
