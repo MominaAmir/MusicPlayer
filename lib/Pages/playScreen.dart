@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:musicplayer/model/music_player_model.dart';
@@ -10,11 +12,13 @@ class PlayScreen extends StatefulWidget {
       {super.key,
       required this.songModel,
       required this.index,
-      required this.controller});
+      required this.controller,
+      required this.artwork});
   final SongModel songModel;
   final int index;
-  final dynamic
-      controller; // Assuming the type of the controller, replace 'dynamic' with actual type if known
+  final dynamic controller;
+  final Uint8List?
+      artwork; // Assuming the type of the controller, replace 'dynamic' with actual type if known
 
   @override
   State<PlayScreen> createState() => _PlayScreenState();
@@ -150,13 +154,11 @@ class _PlayScreenState extends State<PlayScreen> {
                   children: [
                     SizedBox(height: 15),
                     Center(
-                      child: QueryArtworkWidget(
-                          id: songModel.id,
-                          type: ArtworkType.AUDIO,
-                          artworkHeight: 300,
-                          artworkWidth: 300),
+                      child: widget.artwork != null
+                          ? Image.memory(widget.artwork!, fit: BoxFit.cover)
+                          : const Icon(Icons.music_note, size: 40),
                     ),
-                    SizedBox(height: 10),
+                    SizedBox(height: 15),
                     Text(
                       songModel.displayNameWOExt,
                       overflow: TextOverflow.fade,

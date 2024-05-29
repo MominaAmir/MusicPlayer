@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
@@ -51,7 +52,8 @@ class MusicPlayerModel extends ChangeNotifier {
     });
   }
 
-  Future<void> play(String songName, String urlOrUri, String imageurl, String artist) async {
+  Future<void> play(
+      String songName, String urlOrUri, String imageurl, String artist) async {
     _songName = songName;
     _url = urlOrUri;
     _imageurl = imageurl;
@@ -60,7 +62,7 @@ class MusicPlayerModel extends ChangeNotifier {
       await _audioPlayer.pause();
     }
 
-      try {
+    try {
       final mediaItem = MediaItem(
         id: urlOrUri,
         album: 'Unknown Album',
@@ -75,9 +77,9 @@ class MusicPlayerModel extends ChangeNotifier {
           tag: mediaItem,
         ));
       } else {
-          print("File not found: $urlOrUri");
-          return; // Return early if the file does not exist
-        }
+        print("File not found: $urlOrUri");
+        return; // Return early if the file does not exist
+      }
 
       await _audioPlayer.play();
       notifyListeners();
@@ -85,25 +87,29 @@ class MusicPlayerModel extends ChangeNotifier {
       print("Error playing song: $e");
     }
   }
- final _downloadedSongsStreamController = StreamController<List<Map<String, String>>>();
 
-  Stream<List<Map<String, String>>> get downloadedSongsStream => _downloadedSongsStreamController.stream;
+  final _downloadedSongsStreamController =
+      StreamController<List<Map<String, String>>>();
 
-  void removeDownloadedSong(int index) async{
+  Stream<List<Map<String, String>>> get downloadedSongsStream =>
+      _downloadedSongsStreamController.stream;
+
+  void removeDownloadedSong(int index) async {
     await downloadedSongs.removeAt(index);
-   _downloadedSongsStreamController.add(downloadedSongs);
+    _downloadedSongsStreamController.add(downloadedSongs);
     notifyListeners();
   }
-  
-  void deleteFile(String filePath) async {
-  final file = File(filePath);
-  if (await file.exists()) {
-    await file.delete();
-  }
-  notifyListeners();
-}
 
-  Future<void> downloadSong(String url, String songName, BuildContext context, String imageurl, String artist) async {
+  void deleteFile(String filePath) async {
+    final file = File(filePath);
+    if (await file.exists()) {
+      await file.delete();
+    }
+    notifyListeners();
+  }
+
+  Future<void> downloadSong(String url, String songName, BuildContext context,
+      String imageurl, String artist) async {
     _isDownloading[songName] = true;
     _isDownloaded[songName] = false;
     notifyListeners();
@@ -114,7 +120,27 @@ class MusicPlayerModel extends ChangeNotifier {
       final ref = FirebaseStorage.instance.refFromURL(url);
       final file = File(filePath);
       await ref.writeToFile(file);
-      downloadedSongs.add({'name': songName, 'path': filePath, 'url': url , 'imageurl': imageurl , 'artist' :artist});
+
+      final songMetadata = {
+        'name': songName,
+        'path': filePath,
+        'url': url,
+        'imageurl': imageurl,
+        'artist': artist,
+      };
+
+      // Save the song metadata to a local file
+      final metadataFile = File('${directory.path}/songs_metadata.json');
+      List<Map<String, String>> metadataList = [];
+      if (metadataFile.existsSync()) {
+        final metadataContent = metadataFile.readAsStringSync();
+        metadataList =
+            List<Map<String, String>>.from(jsonDecode(metadataContent));
+      }
+      metadataList.add(songMetadata);
+      metadataFile.writeAsStringSync(jsonEncode(metadataList));
+
+      downloadedSongs.add(songMetadata);
 
       _isDownloading[songName] = false;
       _isDownloaded[songName] = true;
@@ -137,10 +163,17 @@ class MusicPlayerModel extends ChangeNotifier {
 
   Future<List<Map<String, String>>> fetchDownloadedSongs() async {
     final directory = await getApplicationDocumentsDirectory();
-    final files = directory.listSync().where((file) => file.path.endsWith('.mp3')).toList();
-    downloadedSongs = files.map((file) {
-      return {'name': file.path.split('/').last, 'path': file.path};
-    }).toList();
+    final metadataFile = File('${directory.path}/songs_metadata.json');
+    List<Map<String, String>> songs = [];
+
+    if (metadataFile.existsSync()) {
+      final metadataContent = metadataFile.readAsStringSync();
+      final List<dynamic> metadataList = jsonDecode(metadataContent);
+      songs =
+          metadataList.map((item) => Map<String, String>.from(item)).toList();
+    }
+
+    downloadedSongs = songs;
     return downloadedSongs;
   }
 

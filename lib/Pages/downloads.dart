@@ -58,12 +58,10 @@ class _DownloadPageState extends State<DownloadPage> {
     });
   }
 
-  List<DocumentSnapshot> _songs = [];
-  AsyncSnapshot<QuerySnapshot<Object?>>? _snapshot;
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color.fromARGB(150, 230, 143, 245),
       body: Container(
         decoration: const BoxDecoration(
           image: DecorationImage(
@@ -101,28 +99,6 @@ class _DownloadPageState extends State<DownloadPage> {
                   ),
                 ),
               ),
-              actions: [
-                Align(
-                  alignment: const AlignmentDirectional(0, 0),
-                  child: IconButton(
-                    hoverColor: const Color.fromARGB(255, 73, 1, 70),
-                    icon: const Icon(
-                      Icons.search,
-                      color: Colors.white,
-                      size: 35,
-                    ),
-                    onPressed: () {
-                      if (_snapshot != null) {
-                        showSearch(
-                          context: context,
-                          delegate: SongSearchDelegate(_songs, _snapshot!),
-                        );
-                      }
-                      print('Search IconButton pressed ...');
-                    },
-                  ),
-                ),
-              ],
               bottom: PreferredSize(
                 preferredSize: const Size.fromHeight(7),
                 child: Container(),
@@ -143,9 +119,6 @@ class _DownloadPageState extends State<DownloadPage> {
                   } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
                     return Center(child: Text('No downloaded songs'));
                   } else {
-                    _snapshot =
-                        snapshot as AsyncSnapshot<QuerySnapshot<Object?>>?;
-                    _songs = snapshot.data!.cast<DocumentSnapshot<Object?>>();
                     downloadedSongs = snapshot.data!;
                     return ListView.builder(
                       itemCount: downloadedSongs.length,

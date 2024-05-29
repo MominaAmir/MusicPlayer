@@ -1,3 +1,4 @@
+import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:musicplayer/model/albumModel.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -8,6 +9,8 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:musicplayer/model/music_player_model.dart';
 import 'package:provider/provider.dart';
+import 'package:path_provider/path_provider.dart';
+
 
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key});
@@ -178,8 +181,8 @@ class _SearchPageState extends State<SearchPage> {
     }
   }
 
-  void _downloadSong(
-      String videoUrl, String title, String artist, String imageUrl) async {
+
+  void _downloadSong(String videoUrl, String title, String artist, String imageUrl) async {
     try {
       final response = await http.get(
         Uri.parse('$downloaderApiUrl?url=$videoUrl'),
@@ -194,18 +197,75 @@ class _SearchPageState extends State<SearchPage> {
         final data = jsonDecode(response.body);
         final audioUrl = data['dlink'];
 
-        if (audioUrl != null && audioUrl.isNotEmpty) {}
+        final directory = await getExternalStorageDirectory();
+        final path = directory?.path ?? '/storage/emulated/0/Download/';
 
-        await saveDownloadedSong(title, artist, imageUrl, audioUrl);
+        if (audioUrl != null && audioUrl.isNotEmpty) {
+          final taskId = await FlutterDownloader.enqueue(
+            url: audioUrl,
+            savedDir: path,
+            showNotification: true,
+            openFileFromNotification: true,
+          );
 
-        _showNotification('Download Started', 'Your download has started.');
+          _showNotification('Download Started', 'Your download has started.');
+        } else {
+          throw Exception('Failed to download audio: audioUrl is empty');
+        }
       } else {
-        throw Exception('Failed to download audio: audioUrl is empty');
+        throw Exception('Failed to download audio: ${response.statusCode}');
       }
     } catch (e) {
-      // Error handling code...
+      print('Error: $e');
+      _showNotification('Download Failed', 'Failed to download audio: $e');
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text('Error'),
+            content: Text('Failed to download audio: $e'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
     }
   }
+
+  // void _downloadSong(
+  //     String videoUrl, String title, String artist, String imageUrl) async {
+  //   try {
+  //     final response = await http.get(
+  //       Uri.parse('$downloaderApiUrl?url=$videoUrl'),
+  //       headers: {
+  //         'X-RapidAPI-Key':
+  //             '049340387emsh1ef19f738c7e73bp152296jsnfe5238b04e6d',
+  //         'X-RapidAPI-Host': 'youtube-mp3-downloader2.p.rapidapi.com',
+  //       },
+  //     );
+
+  //     if (response.statusCode == 200) {
+  //       final data = jsonDecode(response.body);
+  //       final audioUrl = data['dlink'];
+
+  //       if (audioUrl != null && audioUrl.isNotEmpty) {}
+
+  //       await saveDownloadedSong(title, artist, imageUrl, audioUrl);
+
+  //       _showNotification('Download Started', 'Your download has started.');
+  //     } else {
+  //       throw Exception('Failed to download audio: audioUrl is empty');
+  //     }
+  //   } catch (e) {
+  //     // Error handling code...
+  //   }
+  // }
 
   Future<void> _showNotification(String title, String body) async {
     const AndroidNotificationDetails androidPlatformChannelSpecifics =

@@ -73,22 +73,7 @@ class _SongListState extends State<SongList> {
           ],
         ),
       ),
-      PopupMenuItem(
-        value: "edit",
-        child: Row(
-          children: [
-            const Icon(Icons.edit),
-            const SizedBox(width: 8),
-            Text(
-              "Edit",
-              style: GoogleFonts.arimo(
-                color: Colors.black,
-                fontSize: 15.0,
-              ),
-            ),
-          ],
-        ),
-      ),
+      
       
     ];
 
@@ -116,17 +101,7 @@ class _SongListState extends State<SongList> {
               print("List is empty");
             }
             break;
-          case "edit":
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: const Text("Song name Edited"),
-              duration: const Duration(seconds: 3),
-              action: SnackBarAction(
-                label: 'UNDO',
-                onPressed: () {},
-              ),
-            ));
-            break;
-        }
+                   }
       }
     });
   }
@@ -171,6 +146,7 @@ class _SongListState extends State<SongList> {
                 songModel: widget.songModel!,
                 controller: widget.controller,
                 index: widget.index,
+                artwork: artwork,
               ),
             ),
           );

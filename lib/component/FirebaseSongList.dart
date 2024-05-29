@@ -51,10 +51,12 @@ class _FirebaseSongListState extends State<FirebaseSongList> {
             : const Icon(Icons.music_note, size: 20),
         title: Text(
           widget.songName!,
+          style: TextStyle(color: Colors.white),
           maxLines: 1,
         ),
         subtitle: Text(
           widget.subtitle!,
+          style: TextStyle(color: Colors.white),
           maxLines: 1,
         ),
         trailing: Consumer<MusicPlayerModel>(

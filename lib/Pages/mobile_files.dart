@@ -21,8 +21,7 @@ class LocalDeviceData extends StatefulWidget {
 }
 
 class _LocalDeviceDataState extends State<LocalDeviceData> {
-  List<DocumentSnapshot> _songs = [];
-  AsyncSnapshot<QuerySnapshot<Object?>>? _snapshot;
+
   late SongDataController controller;
 
   @override
@@ -84,29 +83,6 @@ class _LocalDeviceDataState extends State<LocalDeviceData> {
                         ),
                       ),
                     ),
-                    actions: [
-                      Align(
-                        alignment: const AlignmentDirectional(0, 0),
-                        child: IconButton(
-                          hoverColor: const Color.fromARGB(255, 73, 1, 70),
-                          icon: const Icon(
-                            Icons.search,
-                            color: Colors.white,
-                            size: 35,
-                          ),
-                          onPressed: () {
-                            if (_snapshot != null) {
-                              showSearch(
-                                context: context,
-                                delegate:
-                                    SongSearchDelegate(_songs, _snapshot!),
-                              );
-                            }
-                            print('Search IconButton pressed ...');
-                          },
-                        ),
-                      ),
-                    ],
                     bottom: PreferredSize(
                       preferredSize: const Size.fromHeight(7),
                       child: Container(),
@@ -123,17 +99,13 @@ class _LocalDeviceDataState extends State<LocalDeviceData> {
                             if (snapshot.connectionState ==
                                 ConnectionState.waiting) {
                               return const Center(
-                                child: CircularProgressIndicator(),
+                                // child: CircularProgressIndicator(),
                               );
                             } else if (snapshot.hasError) {
                               return const Center(
                                 child: Text("Error loading songs"),
                               );
                             } else {
-                              _snapshot = snapshot
-                                  as AsyncSnapshot<QuerySnapshot<Object?>>?;
-                              _songs = snapshot.data!
-                                  as List<DocumentSnapshot<Object?>>;
                               final song = snapshot.data as SongModel;
                               return SongList(
                                 songName: song.title,
