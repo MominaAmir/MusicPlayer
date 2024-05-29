@@ -154,9 +154,7 @@ class _PlayScreenState extends State<PlayScreen> {
                   children: [
                     SizedBox(height: 15),
                     Center(
-                      child: widget.artwork != null
-                          ? Image.memory(widget.artwork!, fit: BoxFit.cover)
-                          : const Icon(Icons.music_note, size: 40),
+                      child: const Icon(Icons.music_note, size: 40),
                     ),
                     SizedBox(height: 15),
                     Text(
